@@ -122,6 +122,7 @@ def dump_report(
     df_dict["cart_resl"] = np.full_like(closure_quality, cart_resl)
     df_dict["ori_resl"] = np.full_like(closure_quality, ori_resl)
     df = pd.DataFrame(df_dict)
+    df.index.set_names(f"index_c{cart_resl}_o{ori_resl}")
     df.to_csv("closure_data.csv")
 
 
@@ -264,7 +265,7 @@ def main(
             if bb_rmsd < closure_quality[target_pose_i]:
                 logger.debug(f"better closure found: replacing")
                 logger.debug(
-                    f"closure_quality[{target_pose_i}] with {bb_rmsd}"
+                    f"closure_quality[{target_pose_i}]:{closure_quality[target_pose_i]} with {bb_rmsd}"
                 )
                 closure_quality[target_pose_i] = bb_rmsd
 
