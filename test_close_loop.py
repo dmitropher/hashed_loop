@@ -46,6 +46,8 @@ def align_loop(loop_pose, target_pose, target_site):
             for resi in (1, loop_pose_size)
         ],
     )
+    logger.debug(f"target_pose.size(): {target_pose.size()}")
+    logger.debug(f"target_site: {target_site}")
     ref_coords = atom_coords(
         target_pose,
         *[
@@ -204,7 +206,9 @@ def main(
                 end + 1,
             )
 
-            aligned_loop = align_loop(loop_pose, chain_1, chain_a_end_index)
+            aligned_loop = align_loop(
+                loop_pose, target_pose, chain_a_end_index
+            )
             loop_pose_size = aligned_loop.size()
             aligned_loop.delete_residue_range_slow(
                 loop_pose_size, loop_pose_size
