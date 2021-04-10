@@ -19,6 +19,8 @@ from hashed_loop import (
     sfd_tag_slice,
     get_chains,
     silent_preload,
+    atom_coords,
+    superposition_pose,
 )
 
 
@@ -27,13 +29,32 @@ from hashed_loop import (
 
 def align_loop(loop_pose, target_pose, target_site):
     """
-    Aligns loop in place to target at the site, trims first/last res
+    Aligns loop in place to target at the site
+
+    Alignment assumes target_site and target_site +1 are the flanking res!
+
+    Make sure this numbering works out, or you're SOL
     """
     loop_pose_size = loop_pose.size()
     logger.debug(f"loop_pose_size: {loop_pose_size}")
-    super_resi_by_bb(loop_pose, target_pose, 1, target_site)
-    loop_pose.delete_residue_range_slow(loop_pose_size, loop_pose_size)
-    loop_pose.delete_residue_range_slow(1, 1)
+    # super_resi_by_bb(loop_pose, target_pose, 1, target_site)
+    init_coords = atom_coords(
+        loop_pose,
+        [
+            (resi, atom)
+            for atom in ("N", "CA", "C")
+            for resi in (1, loop_pose_size)
+        ],
+    )
+    ref_coords = atom_coords(
+        target_pose,
+        [
+            (resi, atom)
+            for atom in ("N", "CA", "C")
+            for resi in (target_site, target_site + 1)
+        ],
+    )
+    superposition_pose(loop_pose, init_coords, ref_coords)
     return loop_pose
 
 
@@ -183,9 +204,13 @@ def main(
                 end + 1,
             )
 
-            sliced_loop = align_loop(loop_pose, chain_1, chain_a_end_index)
-
-            looped = link_poses(chain_1, sliced_loop, chain_2, rechain=True)
+            aligned_loop = align_loop(loop_pose, chain_1, chain_a_end_index)
+            loop_pose_size = aligned_loop.size()
+            aligned_loop.delete_residue_range_slow(
+                loop_pose_size, loop_pose_size
+            )
+            aligned_loop.delete_residue_range_slow(1, 1)
+            looped = link_poses(chain_1, aligned_loop, chain_2, rechain=True)
             reloop_name = f"""{
                 target_pose.pdb_info().name().split(".pdb")[0]
                 }_l{
