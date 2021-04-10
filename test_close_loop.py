@@ -143,13 +143,21 @@ def main(
         all_xforms.append(xform_to_close)
         target_poses.append(target_pose)
 
-    xbin_keys = binner.get_bin_index(np.array([all_xforms]))
+    xbin_keys = binner.get_bin_index(np.array(all_xforms))
     key_mask = gp_dict.contains(xbin_keys)
     found_keys = xbin_keys[key_mask]
-    matching_poses = np.array(target_poses)[key_mask]
+    matching_poses = [
+        pose for pose, is_found, in zip(target_poses, key_mask) if is_found
+    ]
+    # logger.debug(matching_poses)
     del target_poses
-    gp_vals = gp_dict[found_keys]
-    for gp_val in gp_vals:
+    gp_vals = gp_dict[found_keys].view(np.int32).reshape(-1, 2)
+
+    for gp_val, target_pose in zip(gp_vals, matching_poses):
+        # logger.debug(gp_val)
+
+        chain_1, chain_2 = get_chains(target_pose)
+        chain_a_end_index = chain_1.size()
 
         tag_entries = loop_list[gp_val[0] : gp_val[0] + gp_val[1]]
         loops = 1
