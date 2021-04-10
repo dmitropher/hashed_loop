@@ -109,25 +109,19 @@ def dump_report(
     tags_closure = np.array(
         [[p.pdb_info().name(), p.chain_end(1)] for p in attempted_poses]
     )
-    targ_plus_1 = tags_closure[:, 1] + 1
-    pose_data = np.empty((tags_closure.shape[0], 7))
-    headers = [
-        "pose_name",
-        "break start",
-        "break_end",
-        "closure_found",
-        "closure_bb_rmsd",
-        "cart_resl",
-        "ori_resl",
-    ]
-    pose_data[:, 0] = tags_closure[:, 0]
-    pose_data[:, 1] = tags_closure[:, 1]
-    pose_data[:, 2] = targ_plus_1
-    pose_data[:, 3] = pose_mask
-    pose_data[:, 4] = closure_quality
-    pose_data[:, 5] = np.full_like(closure_quality, cart_resl)
-    pose_data[:, 6] = np.full_like(closure_quality, ori_resl)
-    df = pd.DataFrame(data=pose_data, columns=headers)
+    tags = tags_closure[:, 0]
+    closure = tags_closure[:, 1].astype(int)
+    targ_plus_1 = closure + 1
+
+    df_dict = {}
+    df_dict["pose_name"] = tags
+    df_dict["break_start"] = closure
+    df_dict["break_end"] = targ_plus_1
+    df_dict["closure_found"] = pose_mask
+    df_dict["closure_bb_rmsd"] = closure_quality
+    df_dict["cart_resl"] = np.full_like(closure_quality, cart_resl)
+    df_dict["ori_resl"] = np.full_like(closure_quality, ori_resl)
+    df = pd.DataFrame(df_dict)
     df.to_csv("closure_data.csv")
 
 
@@ -199,7 +193,6 @@ def main(
         )
         all_xforms.append(xform_to_close)
         target_poses.append(target_pose)
-        break
 
     xbin_keys = binner.get_bin_index(np.array(all_xforms))
     key_mask = gp_dict.contains(xbin_keys)
@@ -211,7 +204,7 @@ def main(
     closures_attempted = len(target_poses)
     # del target_poses
 
-    pose_indices = np.where(key_mask.flatten() == True)
+    pose_indices = np.nonzero(key_mask.flatten() == True)[0]
     logger.debug(pose_indices)
     gp_vals = gp_dict[found_keys].view(np.int32).reshape(-1, 2)
     # poses_closed = gp_vals.shape[0]
