@@ -56,6 +56,19 @@ def poses_from_silent(silent_filename):
             continue
 
 
+def atom_coords(pose, *selected):
+    coords = pyrosetta.rosetta.utility.vector1_numeric_xyzVector_double_t()
+    if selected:
+        for i, j in selected:
+            xyz = pose.residue(i).xyz(j)
+            coords.append(xyz)
+        return coords
+    for residue in pose.residues:
+        for atom in residue.atoms():
+            coords.append(atom.xyz())
+    return coords
+
+
 def stub_from_residue(
     residue, center_atom="CA", atom1="N", atom2="CA", atom3="C"
 ):
