@@ -40,7 +40,7 @@ def align_loop(loop_pose, target_pose, target_site):
     # super_resi_by_bb(loop_pose, target_pose, 1, target_site)
     init_coords = atom_coords(
         loop_pose,
-        [
+        *[
             (resi, atom)
             for atom in ("N", "CA", "C")
             for resi in (1, loop_pose_size)
@@ -48,7 +48,7 @@ def align_loop(loop_pose, target_pose, target_site):
     )
     ref_coords = atom_coords(
         target_pose,
-        [
+        *[
             (resi, atom)
             for atom in ("N", "CA", "C")
             for resi in (target_site, target_site + 1)
