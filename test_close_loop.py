@@ -9,6 +9,7 @@ import click
 import getpy as gp
 import numpy as np
 from xbin import XformBinner as xb
+import pandas as pd
 
 from hashed_loop import (
     run_pyrosetta_with_flags,
@@ -21,8 +22,10 @@ from hashed_loop import (
     silent_preload,
     atom_coords,
     superposition_pose,
+    subset_bb_rmsd,
 )
 
+from pyrosetta.rosetta.utility import vector1_bool as vector1_bool
 
 # import silent_tools
 
@@ -97,6 +100,37 @@ def preload(
     return gp_dict, loop_list, sfd, silent_index, silent_out
 
 
+def dump_report(
+    closure_quality, attempted_poses, pose_mask, cart_resl, ori_resl
+):
+    """
+    Dump closure data
+    """
+    tags_closure = np.array(
+        [[p.pdb_info().name(), p.chain_end(1)] for p in attempted_poses]
+    )
+    targ_plus_1 = tags_closure[:, 1] + 1
+    pose_data = np.empty((tags_closure.shape[0], 7))
+    headers = [
+        "pose_name",
+        "break start",
+        "break_end",
+        "closure_found",
+        "closure_bb_rmsd",
+        "cart_resl",
+        "ori_resl",
+    ]
+    pose_data[:, 0] = tags_closure[:, 0]
+    pose_data[:, 1] = tags_closure[:, 1]
+    pose_data[:, 2] = targ_plus_1
+    pose_data[:, 3] = pose_mask
+    pose_data[:, 4] = closure_quality
+    pose_data[:, 5] = np.full_like(closure_quality, cart_resl)
+    pose_data[:, 6] = np.full_like(closure_quality, ori_resl)
+    df = pd.DataFrame(data=pose_data, columns=headers)
+    df.to_csv("closure_data.csv")
+
+
 @click.command()
 @click.argument("gp_dict_file", nargs=1)
 @click.argument("loop_archive", nargs=1)
@@ -165,20 +199,27 @@ def main(
         )
         all_xforms.append(xform_to_close)
         target_poses.append(target_pose)
+        break
 
     xbin_keys = binner.get_bin_index(np.array(all_xforms))
     key_mask = gp_dict.contains(xbin_keys)
     found_keys = xbin_keys[key_mask]
-    matching_poses = [
-        pose for pose, is_found, in zip(target_poses, key_mask) if is_found
-    ]
+    # matching_poses = [
+    #     pose for pose, is_found, in zip(target_poses, key_mask) if is_found
+    # ]
     # logger.debug(matching_poses)
-    del target_poses
+    closures_attempted = len(target_poses)
+    # del target_poses
+
+    pose_indices = np.where(key_mask.flatten() == True)
+    logger.debug(pose_indices)
     gp_vals = gp_dict[found_keys].view(np.int32).reshape(-1, 2)
+    # poses_closed = gp_vals.shape[0]
+    closure_quality = np.full(closures_attempted, 1000.0)
 
-    for gp_val, target_pose in zip(gp_vals, matching_poses):
+    for gp_val, target_pose_i in zip(gp_vals, pose_indices):
         # logger.debug(gp_val)
-
+        target_pose = target_poses[target_pose_i]
         chain_1, chain_2 = get_chains(target_pose)
         chain_a_end_index = chain_1.size()
 
@@ -210,6 +251,30 @@ def main(
                 loop_pose, target_pose, chain_a_end_index
             )
             loop_pose_size = aligned_loop.size()
+
+            target_subset = vector1_bool(target_pose.size())
+            aligned_loop_subset = vector1_bool(loop_pose_size)
+
+            target_subset[chain_a_end_index] = True
+            target_subset[chain_a_end_index + 1] = True
+            aligned_loop_subset[1] = True
+            aligned_loop_subset[loop_pose_size] = True
+
+            bb_rmsd = subset_bb_rmsd(
+                target_pose,
+                aligned_loop,
+                target_subset,
+                aligned_loop_subset,
+                superimpose=False,
+            )
+
+            if bb_rmsd < closure_quality[target_pose_i]:
+                logger.debug(f"better closure found: replacing")
+                logger.debug(
+                    f"closure_quality[{target_pose_i}] with {bb_rmsd}"
+                )
+                closure_quality[target_pose_i] = bb_rmsd
+
             aligned_loop.delete_residue_range_slow(
                 loop_pose_size, loop_pose_size
             )
@@ -221,6 +286,9 @@ def main(
                 chain_a_end_index
                 }_{loop_string}.pdb"""
             looped.dump_pdb(reloop_name)
+        dump_report(
+            closure_quality, target_poses, key_mask, xbin_cart, xbin_ori
+        )
 
 
 if __name__ == "__main__":

@@ -411,3 +411,36 @@ def get_chains(pose):
     chain_1 = chains[1]
     chain_2 = chains[2]
     return chain_1, chain_2
+
+
+def subset_bb_rmsd(pose1, pose2, pose1_subset, pose2_subset, superimpose=True):
+    pose1_residues = pyrosetta.rosetta.core.select.get_residues_from_subset(
+        pose1_subset
+    )
+    pose2_residues = pyrosetta.rosetta.core.select.get_residues_from_subset(
+        pose2_subset
+    )
+
+    assert len(pose1_residues) == len(pose2_residues)
+
+    map_atom_id_atom_id = (
+        pyrosetta.rosetta.std.map_core_id_AtomID_core_id_AtomID()
+    )
+    for pose1_seqpos, pose2_seqpos in zip(pose1_residues, pose2_residues):
+        res_p1 = pose1.residue(pose1_seqpos)
+        res_p2 = pose2.residue(pose2_seqpos)
+        for atom_name in ("N", "CA", "C", "O"):
+            atom_p1 = res_p1.atom_index(atom_name)
+            atom_p2 = res_p2.atom_index(atom_name)
+            atom_id1 = pyrosetta.rosetta.core.id.AtomID(atom_p1, pose1_seqpos)
+            atom_id2 = pyrosetta.rosetta.core.id.AtomID(atom_p2, pose2_seqpos)
+            map_atom_id_atom_id[atom_id1] = atom_id2
+
+    if superimpose:
+        return pyrosetta.rosetta.core.scoring.rms_at_corresponding_atoms(
+            pose1, pose2, map_atom_id_atom_id, pose1_residues
+        )
+    else:
+        return pyrosetta.rosetta.core.scoring.rms_at_corresponding_atoms_no_super(
+            pose1, pose2, map_atom_id_atom_id, pose1_residues
+        )
