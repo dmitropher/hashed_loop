@@ -142,7 +142,7 @@ def dump_report(
     "-l",
     "--max-loops-per-closure",
     "max_loops",
-    default=5,
+    default=0,
     type=int,
     show_default=True,
 )
@@ -168,7 +168,7 @@ def main(
     loop_struct_silent,
     target_struct_silent,
     rosetta_flags_file="",
-    max_loops=5,
+    max_loops=0,
     xbin_cart=1.0,
     xbin_ori=15.0,
 ):
@@ -218,13 +218,13 @@ def main(
         chain_a_end_index = chain_1.size()
 
         tag_entries = loop_list[gp_val[0] : gp_val[0] + gp_val[1]]
-        loops = 1
+        loops = 0
+        logger.debug(f"tag_entries: {tag_entries}")
         for loop_string in tag_entries:
+            loops += 1
             if max_loops:
                 if loops > max_loops:
                     break
-                else:
-                    loops += 1
             # working_target = chain_1.clone()
             # extract info from the archive
             tag, start, end = loop_string.split(":")
@@ -232,14 +232,20 @@ def main(
             end = int(end)
             # get the loop from the silent, align, trim off ends
             # loop_pose = pose_from_sfd_tag(sfd, tag)
-            loop_pose = sfd_tag_slice(
-                silent_index,
-                silent_out,
-                loop_struct_silent,
-                tag,
-                start,
-                end + 1,
-            )
+            try:
+                loop_pose = sfd_tag_slice(
+                    silent_index,
+                    silent_out,
+                    loop_struct_silent,
+                    tag,
+                    start,
+                    end + 1,
+                )
+            except AssertionError as e:
+                logger.error(e)
+                logger.error("something went wrong in loop loading")
+                logger.error("passing")
+                continue
 
             aligned_loop = align_loop(
                 loop_pose, target_pose, chain_a_end_index
@@ -279,7 +285,8 @@ def main(
                 }_l{
                 chain_a_end_index
                 }_{loop_string}.pdb"""
-            looped.dump_pdb(reloop_name)
+            if loops < 20:
+                looped.dump_pdb(reloop_name)
         dump_report(
             closure_quality, target_poses, key_mask, xbin_cart, xbin_ori
         )
