@@ -210,7 +210,7 @@ def main(
     gp_vals = gp_dict[found_keys].view(np.int32).reshape(-1, 2)
     # poses_closed = gp_vals.shape[0]
     closure_quality = np.full(closures_attempted, 1000.0)
-
+    good_nuff = 0.3
     for gp_val, target_pose_i in zip(gp_vals, pose_indices):
         # logger.debug(gp_val)
         target_pose = target_poses[target_pose_i]
@@ -274,6 +274,10 @@ def main(
                     f"closure_quality[{target_pose_i}]:{closure_quality[target_pose_i]} with {bb_rmsd}"
                 )
                 closure_quality[target_pose_i] = bb_rmsd
+                if bb_rmsd <= good_nuff:
+                    logger.debug(f"good_nuff is set: {good_nuff}")
+                    logger.debug(f"breaking loop")
+                    break
 
             aligned_loop.delete_residue_range_slow(
                 loop_pose_size, loop_pose_size
@@ -285,7 +289,7 @@ def main(
                 }_l{
                 chain_a_end_index
                 }_{loop_string}.pdb"""
-            if loops < 20:
+            if loops < 200:
                 looped.dump_pdb(reloop_name)
         dump_report(
             closure_quality, target_poses, key_mask, xbin_cart, xbin_ori
