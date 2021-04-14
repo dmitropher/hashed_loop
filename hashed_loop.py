@@ -406,10 +406,10 @@ def silent_preload(silent_file_path):
     return sfd, silent_index, silent_out
 
 
-def get_chains(pose):
+def get_chains(pose, chain_n_1, chain_n_2):
     chains = pose.split_by_chain()
-    chain_1 = chains[1]
-    chain_2 = chains[2]
+    chain_1 = chains[chain_n_1]
+    chain_2 = chains[chain_n_2]
     return chain_1, chain_2
 
 
