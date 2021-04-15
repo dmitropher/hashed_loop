@@ -127,50 +127,63 @@ def dump_report(
 
 
 @click.command()
-@click.argument("gp_dict_file", nargs=1)
-@click.argument("loop_archive", nargs=1)
-@click.argument("loop_struct_silent", nargs=1)
-@click.argument("target_struct_silent", nargs=1)
+@click.argument("input_structure_paths", nargs=-1)
 @click.option(
     "-r",
     "--rosetta-flags",
     "rosetta_flags_file",
     default="",
     show_default=True,
+    help="Rosetta flags file to run pyrosetta with. If unsure, try leaving this blank",
 )
 @click.option(
-    "-l",
-    "--max-loops-per-closure",
-    "max_loops",
-    default=0,
-    type=int,
-    show_default=True,
+    "-e",
+    "--everything-mode",
+    "one_with_everything",
+    is_flag=True,
+    help="Optionally limit the maximum number of outputs.",
 )
 @click.option(
     "-c",
-    "--xbin-cart-res",
-    "xbin_cart",
-    default=1.0,
-    type=float,
+    "--loop-count-per-closure",
+    "loop_count_per_closure",
+    nargs=1,
+    default=50,
+    type=int,
     show_default=True,
+    help="Optionally limit the maximum number of outputs.",
 )
 @click.option(
-    "-o",
-    "--xbin-ori-res",
-    "xbin_ori",
-    default=15,
+    "-l",
+    "--insertion-length-per-closure",
+    "insertion_length_per_closure",
+    nargs=2,
+    default=[1, 20],
+    type=int,
+    show_default=True,
+    help="Optionally limit the minimum or maximum size of loops. Specify both min and max. If min and max are the same, only closures of a single size will be output. The script will accept non-sensical values and return everything it finds in your range, though this may be nothing for some ranges.",
+)
+@click.option(
+    "-t",
+    "--rmsd-threshold",
+    "rmsd_threshold",
+    nargs=1,
+    default=0.25,
     type=float,
     show_default=True,
+    help="Default minimum rmsd is 0.25, if you want to allow lower res, or restrict to higher res, specify a value.",
+)
+@click.option(
+    "-s",
+    "--silent-mode",
+    "silent_mode",
+    is_flag=True,
+    help="This flag allows you to pass silent file(s) and get silent files back. Ignore if you would rather work with pdbs",
 )
 def main(
-    gp_dict_file,
-    loop_archive,
-    loop_struct_silent,
-    target_struct_silent,
+    *input_structure_paths,
     rosetta_flags_file="",
-    max_loops=0,
-    xbin_cart=1.0,
-    xbin_ori=15.0,
+    loop_count_per_closure=[0, 50],
 ):
     """
     """
