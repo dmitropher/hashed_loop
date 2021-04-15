@@ -13,7 +13,6 @@ import pandas as pd
 
 from hashed_loop import (
     run_pyrosetta_with_flags,
-    super_resi_by_bb,
     np_rt_from_residues,
     poses_from_silent,
     link_poses,
