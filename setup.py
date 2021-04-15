@@ -9,4 +9,5 @@ setup(
     license="MIT",
     packages=["hashed_loop"],
     zip_safe=False,
+    install_requires=["xbin", "getpy"],
 )

@@ -56,7 +56,24 @@ from hashed_loop import (
     type=float,
     show_default=True,
 )
-def main(silent_file, rosetta_flags_file="", xbin_cart=1.0, xbin_ori=15.0):
+@click.option(
+    "-m", "--max-frag-len", "max_len", default=20, type=int, show_default=True
+)
+@click.option(
+    "-s",
+    "--resolution-scan-config-file",
+    "scan_file",
+    type=click.Path(exists=True),
+    help="It is possible to provide a file with cart resl in the first column and ori in the second. This will build all the appropriate hashmaps as well as indexing the keys,values, and strings in a single hdf5 archive",
+)
+def main(
+    silent_file,
+    rosetta_flags_file="",
+    xbin_cart=1.0,
+    xbin_ori=15.0,
+    max_len=20,
+    scan_file="",
+):
 
     """
     Generates a loop e2e xbin table referencing a silentfile with metadata
@@ -118,7 +135,9 @@ def main(silent_file, rosetta_flags_file="", xbin_cart=1.0, xbin_ori=15.0):
 
         logging.debug("struct written to silent")
 
-        for start, end in parse_loop_iter(pose):
+        for start, end in parse_loop_iter(
+            pose, use_dssp=False, use_length=max_len
+        ):
             start_res = pose.residue(start)
             end_res = pose.residue(end)
             logging.debug("attempting to process xform ...")
@@ -189,12 +208,15 @@ def main(silent_file, rosetta_flags_file="", xbin_cart=1.0, xbin_ori=15.0):
     np.savez(npz_out, key_val_data)
 
     with h5py.File("key_val_data.hf5", "w") as hdf5:
-        hdf5.create_dataset(
-            "n_mer_key_val_index",
+        ds = hdf5.create_dataset(
+            f"key_val_index_cart_{xbin_cart}_ori_{xbin_ori}_nmer_{max_len}",
             key_val_data.shape,
             dtype=key_val_data.dtype,
             data=key_val_data,
         )
+        ds.attrs.create("cart_resl", data=xbin_cart)
+        ds.attrs.create("ori_resl", data=xbin_ori)
+        ds.attrs.create("max_len", data=max_len)
 
 
 if __name__ == "__main__":
