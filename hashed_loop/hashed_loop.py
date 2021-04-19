@@ -6,6 +6,9 @@ import os
 import sys
 import re
 
+# TODO
+# sketch_get_atoms(structure, [0, 1, 2]) add that from silent_tools
+
 # from pyrosetta import *
 # from pyrosetta.rosetta import *
 
