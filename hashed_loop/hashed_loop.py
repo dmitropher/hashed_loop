@@ -447,3 +447,87 @@ def subset_bb_rmsd(pose1, pose2, pose1_subset, pose2_subset, superimpose=True):
         return pyrosetta.rosetta.core.scoring.rms_at_corresponding_atoms_no_super(
             pose1, pose2, map_atom_id_atom_id, pose1_residues
         )
+
+
+def silent_tag_to_poselets(silent_file, tag, stride, num_res):
+    """
+    Rip a tag into tiny sequential (potentially overlapping) poses
+
+
+    """
+    silent_index = silent_tools.get_silent_index(silent_file)
+
+    silent_out = silent_tools.silent_header(silent_index)
+
+    with open(silent_file, errors="ignore") as sf:
+
+        structure = silent_tools.get_silent_structure_file_open(
+            sf, silent_index, tag
+        )
+
+        annotated_seq = None
+
+        iline = 1
+        found_it = False
+        while iline < len(structure):
+            line = structure[iline]
+            if line.startswith("ANNOTATED_SEQUENCE:"):
+                annotated_seq = line.split()[1]
+            if line[0] in "ELH":
+                found_it = True
+                break
+            iline += 1
+        assert found_it
+        assert not annotated_seq is None
+
+        struct_res1 = iline
+
+        my_seq = [
+            x.group()
+            for x in re.finditer("([A-Z]([[][^]]+[]])?)", annotated_seq)
+        ]
+
+        # debugging assert, remove this
+        assert len(structure) - struct_res1 == len(my_seq)
+
+        seqs = []
+        ress = []
+
+        for i_start in range(1, len(my_seq) + 1, stride):
+            last_res = i_start + num_res - 1
+            if (
+                last_res >= len(my_seq) + 1
+            ):  # all outputs will be the same size
+                continue
+
+            seqs.append(my_seq[i_start - 1 : last_res])
+            ress.append(
+                structure[struct_res1 + i_start - 1 : struct_res1 + last_res]
+            )
+
+        new_tags = pyrosetta.rosetta.utility.vector1_std_string()
+        for ti, (seq, res) in enumerate(zip(seqs, ress)):
+
+            my_tag = "t%i" % ti
+            this_struct = structure[0]
+            this_struct += (
+                "ANNOTATED_SEQUENCE: " + "".join(seq) + " " + my_tag + "\n"
+            )
+            this_struct += "".join(res)
+
+            silent_out += this_struct.replace(tag, my_tag)
+            new_tags.append(my_tag)
+
+        stream = pyrosetta.rosetta.std.istringstream(silent_out)
+        sfd = pyrosetta.rosetta.core.io.silent.SilentFileData(
+            pyrosetta.rosetta.core.io.silent.SilentFileOptions()
+        )
+
+        sfd.read_stream(stream, new_tags, True, "fake")
+
+        poses = []
+        for my_tag in new_tags:
+            pose = pyrosetta.rosetta.core.pose.Pose()
+            sfd.get_structure(my_tag).fill_pose(pose)
+            poses.append(pose)
+        return poses
