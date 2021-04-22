@@ -257,7 +257,11 @@ def main(
     sfd.read_file(silent_file)
     for tag in sfd.tags():
         logging.debug(f"working on tag: {tag}")
-        poses = silent_tag_to_poselets(silent_file, tag, 1, 2)
+        try:
+            poses = silent_tag_to_poselets(silent_file, tag, 1, 2)
+        except AssertionError:
+            logging.debug("assertion in hackload failed, skipping")
+            continue
         tag_loop_data_list, tag_xforms_list = parse_xforms_from_poselets(
             poses, tag, max_n_mer=max_len
         )
