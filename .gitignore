@@ -28,6 +28,11 @@ wheels/
 *.egg
 MANIFEST
 
+#extra data resources to ignore
+*.hf5
+*.silent
+*.silent.idx
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.

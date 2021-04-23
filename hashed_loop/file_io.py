@@ -35,3 +35,18 @@ def default_silent():
         os.path.dirname(__file__), "resources/silent_files/default.silent"
     )
     return silent_path
+
+
+def retrieve_string_archive(hdf5, xbin_cart, xbin_ori):
+    """
+    Returns the matching string archive ds by xbin params
+    """
+    # TODO chance archives to store the matching DatasetID instead of this mess
+    string_archives = hdf5.require_group("string_archive")
+    for key in string_archives.keys():
+        strings_ds = string_archives[key]
+        cart, ori = (
+            strings_ds.attrs[name] for name in ("cart_resl", "ori_resl")
+        )
+        if cart == xbin_cart and ori == xbin_ori:
+            return strings_ds

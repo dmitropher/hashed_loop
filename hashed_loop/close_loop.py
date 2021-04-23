@@ -409,6 +409,7 @@ def main(
                 looped.dump_pdb(reloop_name)
                 loops[target_pose_i] += 1
     dump_report(closure_quality, target_poses, key_mask, xbin_cart, xbin_ori)
+    hdf5.close()
 
 
 if __name__ == "__main__":
