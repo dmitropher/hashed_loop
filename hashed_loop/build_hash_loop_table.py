@@ -119,7 +119,7 @@ def parse_xforms_from_poselets(poselets, tag, max_n_mer=20):
             # small redundancy here on the tag, maybe remove
             # problem is that it's so convenient to just staple these bad boys
             # into a big list as line items later
-            loop_data_string_list.append(f"{tag}:{root_i}:{r2_i}")
+            loop_data_string_list.append(f"{tag}:{root_i+1}:{r2_i+1}")
     return loop_data_string_list, xforms_list
 
 
@@ -262,6 +262,9 @@ def main(
         except AssertionError:
             logging.debug("assertion in hackload failed, skipping")
             continue
+        except RuntimeError:
+            logging.debug("Unable to load this fragment in hackload, skipping")
+            continue
         tag_loop_data_list, tag_xforms_list = parse_xforms_from_poselets(
             poses, tag, max_n_mer=max_len
         )
@@ -305,8 +308,8 @@ def main(
             gp_keys_list.append(key)
             gp_vals_list.append([offset, num_strings])
             offset += num_strings
-        gp_keys = np.array(gp_keys_list)
-        gp_vals = np.array(gp_vals_list)
+        gp_keys = np.array(gp_keys_list, dtype=np.int64)
+        gp_vals = np.array(gp_vals_list, dtype=np.int64)
         general_vals = gp_vals
         # squash data to fit into getpy_dict
         gp_vals = gp_vals.astype(np.int32).reshape(-1)
@@ -317,7 +320,7 @@ def main(
         gp_dump = f"gp_c{xbin_cart}_o{xbin_ori}.bin"
         gp_dict.dump(gp_dump)
 
-        key_val_data = np.empty((gp_keys.shape[0], 3))
+        key_val_data = np.empty((gp_keys.shape[0], 3), dtype=np.int64)
         key_val_data[:, 0] = gp_keys
         key_val_data[:, 1:] = general_vals
 
