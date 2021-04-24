@@ -96,8 +96,8 @@ def preload(rosetta_flags_file):
     return hdf5_handle, sfd, silent_index, silent_out
 
 
-def dump_report(
-    closure_quality, attempted_poses, pose_mask, cart_resl, ori_resl
+def update_report(
+    master_df, closure_quality, attempted_poses, pose_mask, cart_resl, ori_resl
 ):
     """
     Dump closure data
@@ -119,7 +119,12 @@ def dump_report(
     df_dict["ori_resl"] = np.full_like(closure_quality, ori_resl)
     df = pd.DataFrame(df_dict)
     df.index.set_names(f"index_c{cart_resl}_o{ori_resl}")
-    df.to_csv("closure_data.csv")
+    if master_df.empty:
+        return df
+    else:
+        out = pd.concat([master_df, df])
+        return out
+    # df.to_csv("closure_data.csv")
 
 
 def poses_from_paths(*paths, silent_mode=False):
@@ -203,6 +208,14 @@ def retrieve_string_archive(hdf5, xbin_cart, xbin_ori):
     is_flag=True,
     help="This flag allows you to pass silent file(s) and get silent files back. Ignore if you would rather work with pdbs",
 )
+@click.option(
+    "-m",
+    "--max_table-depth",
+    "max_tables",
+    default=25,
+    show_default=True,
+    help="Limit the number of hashmaps to traverse. Useful only if you know how the hdf5 is structured and you want to do something special. Messing with this can drastically lengthen or worsen your run.",
+)
 def main(
     input_structure_paths,
     rosetta_flags_file="",
@@ -211,6 +224,7 @@ def main(
     rmsd_threshold=0.25,
     silent_mode=False,
     one_with_everything=False,
+    max_tables=25,
 ):
     """
     """
@@ -243,6 +257,7 @@ def main(
             )
         ),
     )
+    sorted_ds_list = sorted_ds_list[:max_tables]
     # sorted_ds_print_list = [
     #     (ds.attrs["cart_resl"], ds.attrs["ori_resl"]) for ds in sorted_ds_list
     # ]
@@ -270,7 +285,20 @@ def main(
     closures_attempted = len(target_poses)
     loops = np.zeros(closures_attempted)
 
+    closure_quality = np.full(closures_attempted, 1000.0)
+    closures_on_disk = [set() for i in range(closures_attempted)]
+
+    df = pd.DataFrame()
+
     for kv_ds in sorted_ds_list:
+        unclosed_mask = loops < loop_count_per_closure
+        unclosed = loops[unclosed_mask]
+        logger.debug(f"unclosed: {unclosed}")
+        if unclosed.shape[0] == 0:
+            logger.debug(
+                f"Desired number of outputs found, not scanning bigger tables"
+            )
+            break
         logger.debug("building hashmap from archive")
         logger.debug(f"kv_ds.dtype: {kv_ds.dtype}")
         key_type = np.dtype("i8")
@@ -279,8 +307,7 @@ def main(
 
         gp_keys = np.array(kv_ds[:, 0]).astype(np.int64)
         gp_vals = np.array(kv_ds[:, 1:]).astype(np.int64)
-        # general_vals = gp_vals
-        # squash data to fit into getpy_dict
+
         gp_vals = gp_vals.astype(np.int32).reshape(-1)
         gp_vals = gp_vals.view(np.int64)
 
@@ -302,7 +329,6 @@ def main(
         logger.debug(f"pose_indices: {pose_indices}")
         gp_vals = gp_dict[found_keys].view(np.int32).reshape(-1, 2)
         # poses_closed = gp_vals.shape[0]
-        closure_quality = np.full(closures_attempted, 1000.0)
         # good_nuff = 0.3
 
         string_ds = retrieve_string_archive(hdf5, xbin_cart, xbin_ori)
@@ -331,13 +357,18 @@ def main(
                     }_{loop_string}.pdb"""
                 if os.path.exists(reloop_name):
                     logger.debug(f"this closure is done already: skipping")
+                    if reloop_name in closures_on_disk[target_pose_i]:
+                        if loops[target_pose_i] == 0:
+                            loops[target_pose_i] += 1
+                    else:
+                        closures_on_disk[target_pose_i].add(reloop_name)
                     continue
                 # logger.debug(f"loop_string: {loop_string}")
                 # working_target = chain_1.clone()
                 # extract info from the archive
                 tag, start, end = loop_string.split(":")
-                start = int(start) + 1
-                end = int(end) + 1
+                start = int(start)
+                end = int(end)
 
                 # size of loop -2 ends which get chopped after alignment
                 insertion_size = end - start - 1
@@ -408,7 +439,10 @@ def main(
                 )
                 looped.dump_pdb(reloop_name)
                 loops[target_pose_i] += 1
-    dump_report(closure_quality, target_poses, key_mask, xbin_cart, xbin_ori)
+        df = update_report(
+            df, closure_quality, target_poses, key_mask, xbin_cart, xbin_ori
+        )
+    df.to_csv("closure_data.csv")
     hdf5.close()
 
 
