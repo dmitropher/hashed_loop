@@ -1,3 +1,15 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:1ebc66f4dd2036e725f7b076c7d87192277404fedbd990d24046358f4d560557
-size 327
+import click
+import os
+from shutil import copyfile
+
+
+@click.command()
+@click.argument("store_path")
+def main(store_path):
+    """
+    """
+    dest_path = os.path.join(
+        os.path.dirname(__file__), "resources/hdf5_archives/default.hf5"
+    )
+    os.makedirs(os.path.dirname(dest_path))
+    copyfile(store_path, dest_path)
