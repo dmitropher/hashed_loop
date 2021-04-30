@@ -6,13 +6,14 @@ This is a collections of scripts for closing loops in pdb files (or silent files
 
 If you have a prebuilt table:
 <br/>
-<code> LOOP_XBIN_HF5=/path/to/loop.hf5 </code><br/>
-<code> python -m pip install git+https://github.com/dmitropher/hashed_loop.git </code>
+<code> python -m pip install git+https://github.com/dmitropher/hashed_loop.git </code><br/>
+<code> import_default_loop_table /path/to/loop.hf5 </code>
+(Tables are typically large, the copy operation can take a long time. The table is copied to the package resource directory rather than referenced.)
 
 Otherwise:
 <br/>
 <code> python -m pip install git+https://github.com/dmitropher/hashed_loop.git </code>
 
-If you don't have a prebuilt table, you will have to use build_hash_loop_table.py to build a table and set it as default.
+You can use <code>build_hash_loop_table --help<code/> to build your table. There is currently no default or best practice for this procedure until a global benchmark is complete. Email d.zorine@gmail.com for guidelines on making your own archive. This also typically takes a long time and a lot of RAM. This table can be set as default using the 
 
 A link to a prebuilt table will be included in future releases
