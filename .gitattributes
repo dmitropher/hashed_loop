@@ -7,3 +7,4 @@
 *.hf5 filter=lfs diff=lfs merge=lfs -text
 *.silent filter=lfs diff=lfs merge=lfs -text
 *.idx filter=lfs diff=lfs merge=lfs -text
+*.silent.idx filter=lfs diff=lfs merge=lfs -text
