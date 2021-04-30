@@ -4,13 +4,13 @@ This is a collections of scripts for closing loops in pdb files (or silent files
 
 ## Installation Instructions:
 
-###If you have a prebuilt table:
+### If you have a prebuilt table:
 <br/>
 <code> python -m pip install git+https://github.com/dmitropher/hashed_loop.git </code><br/>
 <code> import_default_loop_table /path/to/loop.hf5 </code><br/>
 (Tables are typically large, the copy operation can take a long time. The table is copied to the package resource directory rather than referenced.)
 
-###Otherwise:
+### Otherwise:
 <br/>
 <code> python -m pip install git+https://github.com/dmitropher/hashed_loop.git </code>
 
