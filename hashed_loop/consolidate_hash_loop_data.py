@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 #!/usr/bin/env python3
 import click
 import numpy as np
@@ -134,8 +133,3 @@ def main(dict_list, frag_list, silent_list):
 
 if __name__ == "__main__":
     main()
-=======
-version https://git-lfs.github.com/spec/v1
-oid sha256:180c78ee7f26175752796145ce2b4f5b7b2db0d0459d2693ffda39cce42482db
-size 3881
->>>>>>> quick commit, no data file

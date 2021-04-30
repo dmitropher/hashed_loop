@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import os
 
 import pyrosetta
@@ -51,8 +50,3 @@ def retrieve_string_archive(hdf5, xbin_cart, xbin_ori):
         )
         if cart == xbin_cart and ori == xbin_ori:
             return strings_ds
-=======
-version https://git-lfs.github.com/spec/v1
-oid sha256:16051f0689caf81b009600ae141af96b9783316508595409dfa60ac0b9b77afd
-size 1395
->>>>>>> quick commit, no data file

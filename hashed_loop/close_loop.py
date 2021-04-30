@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 #! /usr/bin/env python3
 import logging
 import math
@@ -449,8 +448,3 @@ def main(
 
 if __name__ == "__main__":
     main()
-=======
-version https://git-lfs.github.com/spec/v1
-oid sha256:4598cf20208f9ed0c9d238215ee2d54130829da6dfd5a12bcf433e7b08db153e
-size 15273
->>>>>>> quick commit, no data file
