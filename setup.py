@@ -16,7 +16,7 @@ setup(
     author="Dmitri Zorine",
     author_email="d.zorine@gmail.com",
     license="MIT",
-    packages=["hashed_loop"],
+    packages=["hashed_loop", "hashed_loop.hashed_loop"],
     zip_safe=False,
     install_requires=["Click", "xbin", "getpy"],
     entry_points={
