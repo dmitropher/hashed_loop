@@ -11,5 +11,5 @@ def main(store_path):
     dest_path = os.path.join(
         os.path.dirname(__file__), "resources/hdf5_archives/default.hf5"
     )
-    os.makedirs(os.path.dirname(dest_path))
+    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
     copyfile(store_path, dest_path)
