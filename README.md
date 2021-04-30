@@ -21,6 +21,6 @@ The loop closer should be usable by running:
 <br/><code>close_loop /path/to/my.pdb</code><br/>
 Currently it only supports closing chain A to chain B
 
-You can use <code>build_hash_loop_table --help<code/> to build your table. There is currently no default or best practice for this procedure until a global benchmark is complete. Email d.zorine@gmail.com for guidelines on making your own archive. This also typically takes a long time and a lot of RAM. This table can be set as default using the 
+You can use: <br/> <code> build_hash_loop_table --help </code> <br/> to build your table. There is currently no default or best practice for this procedure until a global benchmark is complete. Email d.zorine@gmail.com for guidelines on making your own archive. This also typically takes a long time and a lot of RAM. This table can be set as default using the 
 
 A link to a prebuilt table archive will be included in future releases
