@@ -66,21 +66,21 @@ def align_loop(loop_pose, target_pose, target_site):
     return loop_pose
 
 
-def slice_and_align_loop(
-    loop_pose, loop_start, loop_end, target_pose, target_site
-):
-    loop_pose_size = loop_pose.size()
-    sliced_loop = loop_pose.clone()
-    logger.debug(f"loop_pose_size: {loop_pose_size}")
-    logger.debug(f"loop_start: {loop_start}")
-    logger.debug(f"loop_end: {loop_end}")
-    # continue
-    if loop_end < int(loop_pose_size):
-        sliced_loop.delete_residue_range_slow(loop_end + 1, loop_pose_size)
-    if loop_start > 1:
-        sliced_loop.delete_residue_range_slow(1, loop_start - 1)
-
-    return align_loop(loop_pose, target_pose, target_site)
+# def slice_and_align_loop(
+#     loop_pose, loop_start, loop_end, target_pose, target_site
+# ):
+#     loop_pose_size = loop_pose.size()
+#     sliced_loop = loop_pose.clone()
+#     logger.debug(f"loop_pose_size: {loop_pose_size}")
+#     logger.debug(f"loop_start: {loop_start}")
+#     logger.debug(f"loop_end: {loop_end}")
+#     # continue
+#     if loop_end < int(loop_pose_size):
+#         sliced_loop.delete_residue_range_slow(loop_end + 1, loop_pose_size)
+#     if loop_start > 1:
+#         sliced_loop.delete_residue_range_slow(1, loop_start - 1)
+#
+#     return align_loop(loop_pose, target_pose, target_site)
 
 
 def preload(rosetta_flags_file):
