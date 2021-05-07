@@ -531,3 +531,14 @@ def silent_tag_to_poselets(silent_file, tag, stride, num_res):
             sfd.get_structure(my_tag).fill_pose(pose)
             poses.append(pose)
         return poses
+
+
+def close_from_keys(
+    input_structures, xbin_keys_array, hf5_store_path, silent_archive
+):
+    """
+    Close single chain breaks in input structures if possible with keys
+
+    Try to close the input structures from chain 1 to 2 using the keys provided.
+    Search for closures in the hf5 store, then use hits to
+    """
