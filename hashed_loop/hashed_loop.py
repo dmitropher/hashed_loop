@@ -601,3 +601,13 @@ def get_closure_hits(xbin_keys_array, hf5_dataset):
     archive_values = gp_dict[found_keys].view(np.int32).reshape(-1, 2)
 
     return archive_values, key_mask
+
+def close_from_keys(
+    input_structures, xbin_keys_array, hf5_store_path, silent_archive
+):
+    """
+    Close single chain breaks in input structures if possible with keys
+
+    Try to close the input structures from chain 1 to 2 using the keys provided.
+    Search for closures in the hf5 store, then use hits to
+    """
