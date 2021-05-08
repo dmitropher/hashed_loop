@@ -40,7 +40,6 @@ from pyrosetta.rosetta.utility import vector1_bool as vector1_bool
 
 # import silent_tools
 
-
 def preload(rosetta_flags_file):
     """
     Util to preload all the stuff and initialize from user inputs
