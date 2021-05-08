@@ -363,6 +363,8 @@ def main(
             "description",
             data="Ordered archive of strings describing pose fragments by tag:start:end. The order is addressed by the corresponding key_val dataset",
         )
+        str_id = string_archive.id
+        key_val_ds.attrs.create("string_archive_id", data=str_id)
         hdf5.close()
 
 

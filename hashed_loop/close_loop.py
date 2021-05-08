@@ -255,7 +255,7 @@ def main(
         xbin_ori = kv_ds.attrs["ori_resl"]
         binner = xb(ori_resl=xbin_ori, cart_resl=xbin_cart)
         xbin_keys = binner.get_bin_index(np.array(all_xforms))
-        gp_keys, key_mask = get_closure_hits(xbin_keys, kv_ds)
+        gp_vals, key_mask = get_closure_hits(xbin_keys, kv_ds)
         # matching_poses = [
         #     pose for pose, is_found, in zip(target_poses, key_mask) if is_found
         # ]
