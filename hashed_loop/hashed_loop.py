@@ -606,8 +606,32 @@ def close_from_keys(
     input_structures, xbin_keys_array, hf5_store_path, silent_archive
 ):
     """
-    Close single chain breaks in input structures if possible with keys
+    Pull the archive values from xbin keys
 
-    Try to close the input structures from chain 1 to 2 using the keys provided.
-    Search for closures in the hf5 store, then use hits to
+    returns archive_values,key_mask
+
+    Where archive_values are an NX2 numpy array of positions in the string archive and key_mask is a boolean mask used to slice down the keys based on hash hits
     """
+
+    key_type = np.dtype("i8")
+    value_type = np.dtype("i8")
+    gp_dict = gp.Dict(key_type, value_type)
+
+    gp_keys = np.array(hf5_dataset[:, 0]).astype(np.int64)
+    gp_vals = np.array(hf5_dataset[:, 1:]).astype(np.int64)
+
+    gp_vals = gp_vals.astype(np.int32).reshape(-1)
+    gp_vals = gp_vals.view(np.int64)
+
+    gp_dict[gp_keys] = gp_vals
+
+    key_mask = gp_dict.contains(xbin_keys_array)
+    found_keys = xbin_keys_array[key_mask]
+    # matching_poses = [
+    #     pose for pose, is_found, in zip(target_poses, key_mask) if is_found
+    # ]
+    # logger.debug(matching_poses)
+    # del target_poses
+    archive_values = gp_dict[found_keys].view(np.int32).reshape(-1, 2)
+
+    return archive_values, key_mask
