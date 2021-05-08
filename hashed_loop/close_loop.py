@@ -15,11 +15,7 @@ from xbin import XformBinner as xb
 import pandas as pd
 import h5py
 
-<<<<<<< HEAD
 from hashed_loop import (
-=======
-    from hashed_loop import (
->>>>>>> breaking out into funcs
     align_loop,
     run_pyrosetta_with_flags,
     np_rt_from_residues,
@@ -32,43 +28,18 @@ from hashed_loop import (
     superposition_pose,
     subset_bb_rmsd,
     get_closure_hits,
-<<<<<<< HEAD
 )
 from hashed_loop.file_io import (
     default_hdf5,
     default_silent,
     safe_load_pdbs,
     get_sorted_ds_list,
-=======
->>>>>>> breaking out into funcs
 )
 
 from pyrosetta.rosetta.utility import vector1_bool as vector1_bool
 
 # import silent_tools
 
-<<<<<<< HEAD
-=======
-
-
-# def slice_and_align_loop(
-#     loop_pose, loop_start, loop_end, target_pose, target_site
-# ):
-#     loop_pose_size = loop_pose.size()
-#     sliced_loop = loop_pose.clone()
-#     logger.debug(f"loop_pose_size: {loop_pose_size}")
-#     logger.debug(f"loop_start: {loop_start}")
-#     logger.debug(f"loop_end: {loop_end}")
-#     # continue
-#     if loop_end < int(loop_pose_size):
-#         sliced_loop.delete_residue_range_slow(loop_end + 1, loop_pose_size)
-#     if loop_start > 1:
-#         sliced_loop.delete_residue_range_slow(1, loop_start - 1)
-#
-#     return align_loop(loop_pose, target_pose, target_site)
-
-
->>>>>>> breaking out into funcs
 def preload(rosetta_flags_file):
     """
     Util to preload all the stuff and initialize from user inputs
