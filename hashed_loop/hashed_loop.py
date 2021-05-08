@@ -16,6 +16,10 @@ import re
 
 import distutils.spawn
 
+import getpy as gp
+import numpy as np
+
+
 sys.path.append(
     os.path.dirname(distutils.spawn.find_executable("silent_tools.py"))
 )
@@ -26,7 +30,7 @@ import silent_tools
 
 # maybe no hdf5 necessary
 # import h5py
-import numpy as np
+
 
 import pyrosetta
 
@@ -409,6 +413,39 @@ def silent_preload(silent_file_path):
     return sfd, silent_index, silent_out
 
 
+def align_loop(loop_pose, target_pose, target_site):
+    """
+    Aligns loop in place to target at the site
+
+    Alignment assumes target_site and target_site +1 are the flanking res!
+
+    Make sure this numbering works out, or you're SOL
+    """
+    loop_pose_size = loop_pose.size()
+    # logger.debug(f"loop_pose_size: {loop_pose_size}")
+    # super_resi_by_bb(loop_pose, target_pose, 1, target_site)
+    init_coords = atom_coords(
+        loop_pose,
+        *[
+            (resi, atom)
+            for atom in ("N", "CA", "C")
+            for resi in (1, loop_pose_size)
+        ],
+    )
+    # logger.debug(f"target_pose.size(): {target_pose.size()}")
+    # logger.debug(f"target_site: {target_site}")
+    ref_coords = atom_coords(
+        target_pose,
+        *[
+            (resi, atom)
+            for atom in ("N", "CA", "C")
+            for resi in (target_site, target_site + 1)
+        ],
+    )
+    superposition_pose(loop_pose, init_coords, ref_coords)
+    return loop_pose
+
+
 def get_chains(pose, chain_n_1, chain_n_2):
     chains = pose.split_by_chain()
     chain_1 = chains[chain_n_1]
@@ -533,12 +570,34 @@ def silent_tag_to_poselets(silent_file, tag, stride, num_res):
         return poses
 
 
-def close_from_keys(
-    input_structures, xbin_keys_array, hf5_store_path, silent_archive
-):
+def get_closure_hits(xbin_keys_array, hf5_dataset):
     """
-    Close single chain breaks in input structures if possible with keys
+    Pull the archive values from xbin keys
 
-    Try to close the input structures from chain 1 to 2 using the keys provided.
-    Search for closures in the hf5 store, then use hits to
+    returns archive_values,key_mask
+
+    Where archive_values are an NX2 numpy array of positions in the string archive and key_mask is a boolean mask used to slice down the keys based on hash hits
     """
+
+    key_type = np.dtype("i8")
+    value_type = np.dtype("i8")
+    gp_dict = gp.Dict(key_type, value_type)
+
+    gp_keys = np.array(hf5_dataset[:, 0]).astype(np.int64)
+    gp_vals = np.array(hf5_dataset[:, 1:]).astype(np.int64)
+
+    gp_vals = gp_vals.astype(np.int32).reshape(-1)
+    gp_vals = gp_vals.view(np.int64)
+
+    gp_dict[gp_keys] = gp_vals
+
+    key_mask = gp_dict.contains(xbin_keys_array)
+    found_keys = xbin_keys_array[key_mask]
+    # matching_poses = [
+    #     pose for pose, is_found, in zip(target_poses, key_mask) if is_found
+    # ]
+    # logger.debug(matching_poses)
+    # del target_poses
+    archive_values = gp_dict[found_keys].view(np.int32).reshape(-1, 2)
+
+    return archive_values, key_mask
