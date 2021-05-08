@@ -8,13 +8,15 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 import click
-import getpy as gp
+
+# import getpy as gp
 import numpy as np
 from xbin import XformBinner as xb
 import pandas as pd
 import h5py
 
-from hashed_loop import (
+    from hashed_loop import (
+    align_loop,
     run_pyrosetta_with_flags,
     np_rt_from_residues,
     poses_from_silent,
@@ -25,6 +27,7 @@ from hashed_loop import (
     atom_coords,
     superposition_pose,
     subset_bb_rmsd,
+    get_closure_hits,
 )
 from hashed_loop.file_io import (
     default_hdf5,
@@ -37,38 +40,6 @@ from pyrosetta.rosetta.utility import vector1_bool as vector1_bool
 
 # import silent_tools
 
-
-def align_loop(loop_pose, target_pose, target_site):
-    """
-    Aligns loop in place to target at the site
-
-    Alignment assumes target_site and target_site +1 are the flanking res!
-
-    Make sure this numbering works out, or you're SOL
-    """
-    loop_pose_size = loop_pose.size()
-    # logger.debug(f"loop_pose_size: {loop_pose_size}")
-    # super_resi_by_bb(loop_pose, target_pose, 1, target_site)
-    init_coords = atom_coords(
-        loop_pose,
-        *[
-            (resi, atom)
-            for atom in ("N", "CA", "C")
-            for resi in (1, loop_pose_size)
-        ],
-    )
-    # logger.debug(f"target_pose.size(): {target_pose.size()}")
-    # logger.debug(f"target_site: {target_site}")
-    ref_coords = atom_coords(
-        target_pose,
-        *[
-            (resi, atom)
-            for atom in ("N", "CA", "C")
-            for resi in (target_site, target_site + 1)
-        ],
-    )
-    superposition_pose(loop_pose, init_coords, ref_coords)
-    return loop_pose
 
 
 # def slice_and_align_loop(
@@ -280,24 +251,12 @@ def main(
             break
         logger.debug("building hashmap from archive")
         logger.debug(f"kv_ds.dtype: {kv_ds.dtype}")
-        key_type = np.dtype("i8")
-        value_type = np.dtype("i8")
-        gp_dict = gp.Dict(key_type, value_type)
-
-        gp_keys = np.array(kv_ds[:, 0]).astype(np.int64)
-        gp_vals = np.array(kv_ds[:, 1:]).astype(np.int64)
-
-        gp_vals = gp_vals.astype(np.int32).reshape(-1)
-        gp_vals = gp_vals.view(np.int64)
-
-        gp_dict[gp_keys] = gp_vals
 
         xbin_cart = kv_ds.attrs["cart_resl"]
         xbin_ori = kv_ds.attrs["ori_resl"]
         binner = xb(ori_resl=xbin_ori, cart_resl=xbin_cart)
         xbin_keys = binner.get_bin_index(np.array(all_xforms))
-        key_mask = gp_dict.contains(xbin_keys)
-        found_keys = xbin_keys[key_mask]
+        gp_keys, key_mask = get_closure_hits(xbin_keys, kv_ds)
         # matching_poses = [
         #     pose for pose, is_found, in zip(target_poses, key_mask) if is_found
         # ]
