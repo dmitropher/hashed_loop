@@ -255,12 +255,8 @@ def main(
         xbin_ori = kv_ds.attrs["ori_resl"]
         binner = xb(ori_resl=xbin_ori, cart_resl=xbin_cart)
         xbin_keys = binner.get_bin_index(np.array(all_xforms))
+
         gp_vals, key_mask = get_closure_hits(xbin_keys, kv_ds)
-        # matching_poses = [
-        #     pose for pose, is_found, in zip(target_poses, key_mask) if is_found
-        # ]
-        # logger.debug(matching_poses)
-        # del target_poses
 
         pose_indices = np.nonzero(key_mask.flatten() == True)[0]
         logger.debug(f"pose_indices: {pose_indices}")
