@@ -2,6 +2,8 @@
 
 This is a collections of scripts for closing loops in pdb files (or silent files) as an add-on for the Rosetta protein suite.
 
+<b> If something doesn't run, please don't hesitate to email me! (d.zorine@gmail.com) </b>
+
 ## Installation Instructions:
 
 ### If you have a prebuilt table:
