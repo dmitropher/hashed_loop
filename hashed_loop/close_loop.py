@@ -26,7 +26,7 @@ from hashed_loop import (
     superposition_pose,
     subset_bb_rmsd,
 )
-from file_io import default_hdf5, default_silent, safe_load_pdbs
+from hashed_loop.file_io import default_hdf5, default_silent, safe_load_pdbs
 
 from pyrosetta.rosetta.utility import vector1_bool as vector1_bool
 
