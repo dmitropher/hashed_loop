@@ -28,7 +28,6 @@ from hashed_loop import (
     superposition_pose,
     subset_bb_rmsd,
     get_closure_hits,
-)
 from hashed_loop.file_io import (
     default_hdf5,
     default_silent,
