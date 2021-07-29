@@ -53,11 +53,8 @@ def retrieve_string_archive(hdf5, xbin_cart, xbin_ori):
             return strings_ds
 
 
-def get_sorted_ds_list(hdf5_handle):
-    """
-    Returns a list of datasets sorted by ori and cart from finest to coarsest
-    """
-    kv_group = hdf5_handle["key_value_data"]
+def get_sorted_ds_list(hdf5):
+    kv_group = hdf5["key_value_data"]
     ds_list = []
     for name in kv_group.keys():
         ds = kv_group[name]
