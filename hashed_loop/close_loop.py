@@ -29,17 +29,10 @@ from hashed_loop import (
     subset_bb_rmsd,
     get_closure_hits,
 )
-
-from hashed_loop.file_io import (
-    default_hdf5,
-    default_silent,
-    safe_load_pdbs,
-    get_sorted_ds_list,
-)
+from file_io import default_hdf5, default_silent, safe_load_pdbs
 
 from pyrosetta.rosetta.utility import vector1_bool as vector1_bool
 
-# import silent_tools
 
 def preload(rosetta_flags_file):
     """
@@ -188,7 +181,33 @@ def main(
     """
     hdf5, sfd, silent_index, silent_out = preload(rosetta_flags_file)
     logger.debug("preload complete")
-    sorted_ds_list = get_sorted_ds_list(hdf5)
+    kv_group = hdf5["key_value_data"]
+    ds_list = []
+    for name in kv_group.keys():
+        ds = kv_group[name]
+        if not isinstance(ds, h5py.Dataset):
+            continue
+        else:
+            ds_list.append(ds)
+
+    cart_avg, ori_avg = (
+        sum(resls) / len(resls)
+        for resls in zip(
+            *((ds.attrs["cart_resl"], ds.attrs["ori_resl"]) for ds in ds_list)
+        )
+    )
+    sorted_ds_list = sorted(
+        ds_list,
+        key=(
+            lambda ds: (
+                math.sqrt(
+                    (ds.attrs["cart_resl"] * ori_avg) ** 2
+                    + (ds.attrs["ori_resl"] * cart_avg) ** 2
+                )
+                / (cart_avg * ori_avg)
+            )
+        ),
+    )
     sorted_ds_list = sorted_ds_list[:max_tables]
     # sorted_ds_print_list = [
     #     (ds.attrs["cart_resl"], ds.attrs["ori_resl"]) for ds in sorted_ds_list
@@ -238,17 +257,8 @@ def main(
         xbin_ori = kv_ds.attrs["ori_resl"]
         binner = xb(ori_resl=xbin_ori, cart_resl=xbin_cart)
         xbin_keys = binner.get_bin_index(np.array(all_xforms))
-<<<<<<< HEAD
-        gp_keys, key_mask = get_closure_hits(xbin_keys, kv_ds)
-        # matching_poses = [
-        #     pose for pose, is_found, in zip(target_poses, key_mask) if is_found
-        # ]
-        # logger.debug(matching_poses)
-        # del target_poses
-=======
 
         gp_vals, key_mask = get_closure_hits(xbin_keys, kv_ds)
->>>>>>> cbc5611ffd8cb78821a67a32b1c3e41c55fcbf50
 
         pose_indices = np.nonzero(key_mask.flatten() == True)[0]
         logger.debug(f"pose_indices: {pose_indices}")
