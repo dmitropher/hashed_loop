@@ -29,6 +29,7 @@ from hashed_loop import (
     subset_bb_rmsd,
     get_closure_hits,
 )
+
 from hashed_loop.file_io import (
     default_hdf5,
     default_silent,
@@ -237,12 +238,17 @@ def main(
         xbin_ori = kv_ds.attrs["ori_resl"]
         binner = xb(ori_resl=xbin_ori, cart_resl=xbin_cart)
         xbin_keys = binner.get_bin_index(np.array(all_xforms))
+<<<<<<< HEAD
         gp_keys, key_mask = get_closure_hits(xbin_keys, kv_ds)
         # matching_poses = [
         #     pose for pose, is_found, in zip(target_poses, key_mask) if is_found
         # ]
         # logger.debug(matching_poses)
         # del target_poses
+=======
+
+        gp_vals, key_mask = get_closure_hits(xbin_keys, kv_ds)
+>>>>>>> cbc5611ffd8cb78821a67a32b1c3e41c55fcbf50
 
         pose_indices = np.nonzero(key_mask.flatten() == True)[0]
         logger.debug(f"pose_indices: {pose_indices}")
