@@ -1,5 +1,6 @@
 import os
-
+import math
+import h5py
 import pyrosetta
 
 
@@ -50,3 +51,37 @@ def retrieve_string_archive(hdf5, xbin_cart, xbin_ori):
         )
         if cart == xbin_cart and ori == xbin_ori:
             return strings_ds
+
+
+def get_sorted_ds_list(hdf5_handle):
+    """
+    Returns a list of datasets sorted by ori and cart from finest to coarsest
+    """
+    kv_group = hdf5_handle["key_value_data"]
+    ds_list = []
+    for name in kv_group.keys():
+        ds = kv_group[name]
+        if not isinstance(ds, h5py.Dataset):
+            continue
+        else:
+            ds_list.append(ds)
+
+    cart_avg, ori_avg = (
+        sum(resls) / len(resls)
+        for resls in zip(
+            *((ds.attrs["cart_resl"], ds.attrs["ori_resl"]) for ds in ds_list)
+        )
+    )
+    sorted_ds_list = sorted(
+        ds_list,
+        key=(
+            lambda ds: (
+                math.sqrt(
+                    (ds.attrs["cart_resl"] * ori_avg) ** 2
+                    + (ds.attrs["ori_resl"] * cart_avg) ** 2
+                )
+                / (cart_avg * ori_avg)
+            )
+        ),
+    )
+    return sorted_ds_list
