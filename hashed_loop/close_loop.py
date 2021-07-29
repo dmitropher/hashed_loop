@@ -29,7 +29,12 @@ from hashed_loop import (
     subset_bb_rmsd,
     get_closure_hits,
 )
-from file_io import default_hdf5, default_silent, safe_load_pdbs
+from file_io import (
+    default_hdf5,
+    default_silent,
+    safe_load_pdbs,
+    get_sorted_ds_list,
+)
 
 from pyrosetta.rosetta.utility import vector1_bool as vector1_bool
 
@@ -181,33 +186,7 @@ def main(
     """
     hdf5, sfd, silent_index, silent_out = preload(rosetta_flags_file)
     logger.debug("preload complete")
-    kv_group = hdf5["key_value_data"]
-    ds_list = []
-    for name in kv_group.keys():
-        ds = kv_group[name]
-        if not isinstance(ds, h5py.Dataset):
-            continue
-        else:
-            ds_list.append(ds)
-
-    cart_avg, ori_avg = (
-        sum(resls) / len(resls)
-        for resls in zip(
-            *((ds.attrs["cart_resl"], ds.attrs["ori_resl"]) for ds in ds_list)
-        )
-    )
-    sorted_ds_list = sorted(
-        ds_list,
-        key=(
-            lambda ds: (
-                math.sqrt(
-                    (ds.attrs["cart_resl"] * ori_avg) ** 2
-                    + (ds.attrs["ori_resl"] * cart_avg) ** 2
-                )
-                / (cart_avg * ori_avg)
-            )
-        ),
-    )
+    sorted_ds_list = get_sorted_ds_list(hdf5)
     sorted_ds_list = sorted_ds_list[:max_tables]
     # sorted_ds_print_list = [
     #     (ds.attrs["cart_resl"], ds.attrs["ori_resl"]) for ds in sorted_ds_list
