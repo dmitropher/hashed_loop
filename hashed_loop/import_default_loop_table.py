@@ -2,7 +2,7 @@ import click
 import os
 from shutil import copyfile
 
-
+# TODO Add link mode to this script so you don't ahve to copy resources every time
 @click.command()
 @click.argument("store_path")
 @click.argument("silent_path")
