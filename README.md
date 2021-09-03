@@ -6,6 +6,9 @@ This is a collections of scripts for closing loops in pdb files (or silent files
 
 ## Installation Instructions:
 
+<br/>
+You must have pyrosetta inside of the environment you install this package in. It is recommended that you install this inside of a conda environment where you have pyrosetta.
+
 ### If you have a prebuilt table:
 <br/>
 <code> python -m pip install git+https://github.com/dmitropher/hashed_loop.git </code><br/>
