@@ -29,7 +29,7 @@ from hashed_loop import (
     subset_bb_rmsd,
     get_closure_hits,
 )
-from file_io import (
+from hashed_loop.file_io import (
     default_hdf5,
     default_silent,
     safe_load_pdbs,
