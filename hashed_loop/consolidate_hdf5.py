@@ -158,16 +158,14 @@ def main(hdf5_list, silent_list, consolidated_path="consolidated.hf5"):
         # gp_dump = "getpy_dict.bin"
         # gp_dict.dump(gp_dump)
 
-        key_val_data = np.empty((gp_keys.shape[0], 3))
+        key_val_data = np.zeros((gp_keys.shape[0], 3))
         key_val_data[:, 0] = gp_keys
         key_val_data[:, 1:] = gp_vals
 
         logging.debug("writing all stores to disk")
         hdf5 = h5py.File(consolidated_path, "a")
         kv_group = hdf5.require_group("key_value_data")
-        kv_ds_name = (
-            f"key_val_index_cart_{xbin_cart}_ori_{xbin_ori}_nmer_{max_len}"
-        )
+        kv_ds_name = f"key_val_index_cart_{cart}_ori_{ori}_nmer_{max_len}"
         logging.debug(f"{kv_ds_name}")
         key_val_ds = kv_group.create_dataset(
             kv_ds_name, key_val_data.shape, dtype=key_val_data.dtype
