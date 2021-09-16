@@ -1,6 +1,5 @@
 #! /usr/bin/env python3
 import logging
-import math
 import os
 
 logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.ERROR)
@@ -24,8 +23,6 @@ from hashed_loop import (
     sfd_tag_slice,
     get_chains,
     silent_preload,
-    atom_coords,
-    superposition_pose,
     subset_bb_rmsd,
     get_closure_hits,
 )
