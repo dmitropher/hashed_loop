@@ -192,19 +192,26 @@ def main(
 
     all_xforms = []
     target_poses = []
+    chain_from_to = []  # list of lists, [[n_chain_from,n_chain_to]]
+    pose_index_list = []
 
-    for target_pose in poses_from_paths(
-        *input_structure_paths, silent_mode=silent_mode
+    for struct_num, target_pose in enumerate(
+        poses_from_paths(*input_structure_paths, silent_mode=silent_mode)
     ):
         logger.debug("pose obtained")
+        n_chains = target_pose.num_chains()
+        for i in range(1, n_chains):
+            chain_from, chain_to = get_chains(target_pose, i, i + 1)
+            chain_from_end_index = chain_from.size()
+            xform_to_close = np_rt_from_residues(
+                chain_from.residues[chain_from_end_index], chain_to.residues[1]
+            )
+            all_xforms.append(xform_to_close)
+            target_poses.append(target_pose)
+            chain_from_to.append([i, i + 1])
+            pose_index_list.append(struct_num)
 
-        chain_1, chain_2 = get_chains(target_pose, 1, 2)
-        chain_a_end_index = chain_1.size()
-        xform_to_close = np_rt_from_residues(
-            chain_1.residues[chain_a_end_index], chain_2.residues[1]
-        )
-        all_xforms.append(xform_to_close)
-        target_poses.append(target_pose)
+    num_poses = np.unique(pose_index_list).shape[0]
 
     min_size = min(insertion_length_per_closure)
     max_size = max(insertion_length_per_closure)
@@ -240,113 +247,116 @@ def main(
         logger.debug(f"pose_indices: {pose_indices}")
 
         string_ds = retrieve_string_archive(hdf5, xbin_cart, xbin_ori)
-        for gp_val, target_pose_i in zip(gp_vals, pose_indices):
-            # logger.debug(gp_val)
-            target_pose = target_poses[target_pose_i]
-            chain_1, chain_2 = get_chains(target_pose, 1, 2)
-            chain_a_end_index = chain_1.size()
 
-            tag_entries = string_ds[gp_val[0] : gp_val[0] + gp_val[1]]
+        for pose_number in range(num_poses):
 
-            # logger.debug(f"tag_entries: {tag_entries}")
-            for loop_string_bytes in tag_entries:
+            for gp_val, target_pose_i in zip(gp_vals, pose_indices):
+                # logger.debug(gp_val)
+                target_pose = target_poses[target_pose_i]
+                chain_1, chain_2 = get_chains(target_pose, 1, 2)
+                chain_a_end_index = chain_1.size()
 
-                if loop_count_per_closure:
-                    if loops[target_pose_i] >= loop_count_per_closure:
+                tag_entries = string_ds[gp_val[0] : gp_val[0] + gp_val[1]]
+
+                # logger.debug(f"tag_entries: {tag_entries}")
+                for loop_string_bytes in tag_entries:
+
+                    if loop_count_per_closure:
+                        if loops[target_pose_i] >= loop_count_per_closure:
+                            logger.debug(
+                                f"loops_closed: {loops[target_pose_i] }, skipping this target:{target_pose_i}"
+                            )
+                            break
+                    loop_string = loop_string_bytes.decode("UTF-8")
+                    reloop_name = f"""{
+                        target_pose.pdb_info().name().split(".pdb")[0]
+                        }_l{
+                        chain_a_end_index
+                        }_{loop_string}.pdb"""
+                    if os.path.exists(reloop_name):
+                        logger.debug(f"this closure is done already: skipping")
+                        if reloop_name in closures_on_disk[target_pose_i]:
+                            if loops[target_pose_i] == 0:
+                                loops[target_pose_i] += 1
+                        else:
+                            closures_on_disk[target_pose_i].add(reloop_name)
+                        continue
+                    # logger.debug(f"loop_string: {loop_string}")
+                    # working_target = chain_1.clone()
+                    # extract info from the archive
+                    tag, start, end = loop_string.split(":")
+                    start = int(start)
+                    end = int(end)
+
+                    # size of loop -2 ends which get chopped after alignment
+                    insertion_size = end - start - 1
+                    if not (min_size <= insertion_size <= max_size):
                         logger.debug(
-                            f"loops_closed: {loops[target_pose_i] }, skipping this target:{target_pose_i}"
+                            f"insertion size ({insertion_size}) out of range: {insertion_length_per_closure}"
                         )
-                        break
-                loop_string = loop_string_bytes.decode("UTF-8")
-                reloop_name = f"""{
-                    target_pose.pdb_info().name().split(".pdb")[0]
-                    }_l{
-                    chain_a_end_index
-                    }_{loop_string}.pdb"""
-                if os.path.exists(reloop_name):
-                    logger.debug(f"this closure is done already: skipping")
-                    if reloop_name in closures_on_disk[target_pose_i]:
-                        if loops[target_pose_i] == 0:
-                            loops[target_pose_i] += 1
-                    else:
-                        closures_on_disk[target_pose_i].add(reloop_name)
-                    continue
-                # logger.debug(f"loop_string: {loop_string}")
-                # working_target = chain_1.clone()
-                # extract info from the archive
-                tag, start, end = loop_string.split(":")
-                start = int(start)
-                end = int(end)
+                        continue
+                    # get the loop from the silent, align, trim off ends
+                    # loop_pose = pose_from_sfd_tag(sfd, tag)
+                    # HACK careful, default_silent() is hardcoded here
+                    # TODO implement user ability to specify own tables for everything
+                    try:
+                        loop_pose = sfd_tag_slice(
+                            silent_index,
+                            silent_out,
+                            default_silent(),
+                            tag,
+                            start,
+                            end + 1,
+                        )
+                    except AssertionError as e:
+                        logger.error(e)
+                        logger.error("something went wrong in loop loading")
+                        logger.error("passing")
+                        continue
 
-                # size of loop -2 ends which get chopped after alignment
-                insertion_size = end - start - 1
-                if not (min_size <= insertion_size <= max_size):
-                    logger.debug(
-                        f"insertion size ({insertion_size}) out of range: {insertion_length_per_closure}"
+                    aligned_loop = align_loop(
+                        loop_pose, target_pose, chain_a_end_index
                     )
-                    continue
-                # get the loop from the silent, align, trim off ends
-                # loop_pose = pose_from_sfd_tag(sfd, tag)
-                # HACK careful, default_silent() is hardcoded here
-                # TODO implement user ability to specify own tables for everything
-                try:
-                    loop_pose = sfd_tag_slice(
-                        silent_index,
-                        silent_out,
-                        default_silent(),
-                        tag,
-                        start,
-                        end + 1,
+                    loop_pose_size = aligned_loop.size()
+                    # insertion_size = loop_pose_size - 2
+
+                    target_subset = vector1_bool(target_pose.size())
+                    aligned_loop_subset = vector1_bool(loop_pose_size)
+
+                    target_subset[chain_a_end_index] = True
+                    target_subset[chain_a_end_index + 1] = True
+                    aligned_loop_subset[1] = True
+                    aligned_loop_subset[loop_pose_size] = True
+
+                    bb_rmsd = subset_bb_rmsd(
+                        target_pose,
+                        aligned_loop,
+                        target_subset,
+                        aligned_loop_subset,
+                        superimpose=False,
                     )
-                except AssertionError as e:
-                    logger.error(e)
-                    logger.error("something went wrong in loop loading")
-                    logger.error("passing")
-                    continue
+                    if bb_rmsd < closure_quality[target_pose_i]:
+                        # logger.debug(f"better closure found: replacing")
+                        # logger.debug(
+                        #     f"closure_quality[{target_pose_i}]:{closure_quality[target_pose_i]} with {bb_rmsd}"
+                        # )
+                        closure_quality[target_pose_i] = bb_rmsd
+                    if bb_rmsd > rmsd_threshold:
+                        # logger.debug(
+                        #     f"bb_rmsd exceeds threshold {bb_rmsd} > {rmsd_threshold}"
+                        # )
+                        # logger.debug(f"Not building pose")
+                        continue
 
-                aligned_loop = align_loop(
-                    loop_pose, target_pose, chain_a_end_index
-                )
-                loop_pose_size = aligned_loop.size()
-                # insertion_size = loop_pose_size - 2
-
-                target_subset = vector1_bool(target_pose.size())
-                aligned_loop_subset = vector1_bool(loop_pose_size)
-
-                target_subset[chain_a_end_index] = True
-                target_subset[chain_a_end_index + 1] = True
-                aligned_loop_subset[1] = True
-                aligned_loop_subset[loop_pose_size] = True
-
-                bb_rmsd = subset_bb_rmsd(
-                    target_pose,
-                    aligned_loop,
-                    target_subset,
-                    aligned_loop_subset,
-                    superimpose=False,
-                )
-                if bb_rmsd < closure_quality[target_pose_i]:
-                    # logger.debug(f"better closure found: replacing")
-                    # logger.debug(
-                    #     f"closure_quality[{target_pose_i}]:{closure_quality[target_pose_i]} with {bb_rmsd}"
-                    # )
-                    closure_quality[target_pose_i] = bb_rmsd
-                if bb_rmsd > rmsd_threshold:
-                    # logger.debug(
-                    #     f"bb_rmsd exceeds threshold {bb_rmsd} > {rmsd_threshold}"
-                    # )
-                    # logger.debug(f"Not building pose")
-                    continue
-
-                aligned_loop.delete_residue_range_slow(
-                    loop_pose_size, loop_pose_size
-                )
-                aligned_loop.delete_residue_range_slow(1, 1)
-                looped = link_poses(
-                    chain_1, aligned_loop, chain_2, rechain=True
-                )
-                looped.dump_pdb(reloop_name)
-                loops[target_pose_i] += 1
+                    aligned_loop.delete_residue_range_slow(
+                        loop_pose_size, loop_pose_size
+                    )
+                    aligned_loop.delete_residue_range_slow(1, 1)
+                    looped = link_poses(
+                        chain_1, aligned_loop, chain_2, rechain=True
+                    )
+                    looped.dump_pdb(reloop_name)
+                    loops[target_pose_i] += 1
         df = update_report(
             df, closure_quality, target_poses, key_mask, xbin_cart, xbin_ori
         )
