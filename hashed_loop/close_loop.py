@@ -234,14 +234,7 @@ def main(
 
     num_poses = len(pose_mans)
 
-    min_size = min(insertion_length_per_closure)
-    max_size = max(insertion_length_per_closure)
     loops = np.zeros(num_poses)
-
-    closure_quality = np.full(num_poses, 1000.0)
-    closures_on_disk = [set() for i in range(num_poses)]
-
-    df = pd.DataFrame()
 
     for kv_ds in sorted_ds_list:
         unclosed_mask = loops < loop_count_per_closure
