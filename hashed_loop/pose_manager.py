@@ -6,7 +6,12 @@ import numpy as np
 import npose_util as nu
 import npose_util_pyrosetta as nup
 
-from hashed_loop import sfd_tag_slice, align_and_get_rmsd, link_poses
+from hashed_loop import (
+    sfd_tag_slice,
+    align_and_get_rmsd,
+    link_poses,
+    trim_pose,
+)
 
 
 # Named tuple declaration - I think this type of scope is normal for this object
@@ -229,9 +234,8 @@ class PoseManager(object):
                 )
             passing_loops.sort(key=lambda lc: lc.rmsd)
             passing_loops = passing_loops[:loop_count_per_closure]
-        if not allow_incomplete:
-            if not all(loop_main_dict.values()):
-                return
+        if not (allow_incomplete) and not (all(loop_main_dict.values())):
+            return
 
         # Careful, assumes you're not doing circular permutations
         sorted_chain_keys, loop_vals = zip(
@@ -255,12 +259,7 @@ class PoseManager(object):
                 begin = mod_dict[chain][0]
                 end = mod_dict[chain][1]
                 loop = mod_dict[chain][2]
-                if not ((end is None) or end == pose_clone.size()):
-                    pose_clone.delete_residue_range_slow(
-                        end + 1, pose_clone.size()
-                    )
-                if not ((begin is None) or begin == 1):
-                    pose_clone.delete_residue_range_slow(1, begin - 1)
+                trim_pose(pose_clone, begin, end)
                 final_pose_list.append(pose_clone)
                 if not (loop is None):
                     final_pose_list.append(loop)

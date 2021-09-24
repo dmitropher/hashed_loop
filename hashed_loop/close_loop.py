@@ -1,6 +1,5 @@
 #! /usr/bin/env python3
 import logging
-import os
 
 logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -15,15 +14,9 @@ import pandas as pd
 import h5py
 
 from hashed_loop import (
-    align_loop,
     run_pyrosetta_with_flags,
-    np_rt_from_residues,
     poses_from_silent,
-    link_poses,
-    sfd_tag_slice,
-    get_chains,
     silent_preload,
-    subset_bb_rmsd,
     get_closure_hits,
 )
 from pose_manager import PoseManager as poseman
@@ -34,8 +27,6 @@ from hashed_loop.file_io import (
     safe_load_pdbs,
     get_sorted_ds_list,
 )
-
-from pyrosetta.rosetta.utility import vector1_bool as vector1_bool
 
 
 def preload(rosetta_flags_file):
