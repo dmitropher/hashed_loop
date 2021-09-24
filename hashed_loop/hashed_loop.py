@@ -25,14 +25,9 @@ sys.path.append(
 )
 import silent_tools
 
-# from silent_tools import eprint
-
-
-# maybe no hdf5 necessary
-# import h5py
-
-
 import pyrosetta
+
+from pyrosetta.rosetta.utility import vector1_bool as vector1_bool
 
 
 def pose_from_sfd_tag(sfd, tag):
@@ -413,13 +408,9 @@ def silent_preload(silent_file_path):
     return sfd, silent_index, silent_out
 
 
-def align_loop(loop_pose, target_pose, target_site):
+def align_loop(loop_pose, target_pose, start_site, end_site=None):
     """
     Aligns loop in place to target at the site
-
-    Alignment assumes target_site and target_site +1 are the flanking res!
-
-    Make sure this numbering works out, or you're SOL
     """
     loop_pose_size = loop_pose.size()
     # logger.debug(f"loop_pose_size: {loop_pose_size}")
@@ -439,11 +430,47 @@ def align_loop(loop_pose, target_pose, target_site):
         *[
             (resi, atom)
             for atom in ("N", "CA", "C")
-            for resi in (target_site, target_site + 1)
+            for resi in (
+                start_site,
+                start_site + 1 if end_site is None else end_site,
+            )
         ],
     )
     superposition_pose(loop_pose, init_coords, ref_coords)
     return loop_pose
+
+
+def align_and_get_rmsd(
+    loop_pose, target_pose, targ_pose_start_site, targ_pose_end_site
+):
+    """
+    Aligns loop pose object to target and returns the rmsd
+    """
+    align_loop(
+        loop_pose,
+        target_pose,
+        targ_pose_start_site,
+        end_site=targ_pose_end_site,
+    )
+    loop_pose_size = loop_pose.size()
+    # insertion_size = loop_pose_size - 2
+
+    target_subset = vector1_bool(target_pose.size())
+    aligned_loop_subset = vector1_bool(loop_pose_size)
+
+    target_subset[targ_pose_start_site] = True
+    target_subset[targ_pose_end_site] = True
+    aligned_loop_subset[1] = True
+    aligned_loop_subset[loop_pose_size] = True
+
+    endpoint_bb_rmsd = subset_bb_rmsd(
+        target_pose,
+        loop_pose,
+        target_subset,
+        aligned_loop_subset,
+        superimpose=False,
+    )
+    return endpoint_bb_rmsd
 
 
 def get_chains(pose, chain_n_1, chain_n_2):

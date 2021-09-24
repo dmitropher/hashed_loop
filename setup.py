@@ -18,7 +18,7 @@ setup(
     license="MIT",
     packages=["hashed_loop"],
     zip_safe=False,
-    install_requires=["click", "xbin", "getpy", "h5py"],
+    install_requires=["click", "xbin", "getpy", "h5py", "npose"],
     entry_points={
         "console_scripts": [
             "import_default_loop_table = hashed_loop.import_default_loop_table:main",
