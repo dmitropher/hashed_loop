@@ -223,10 +223,7 @@ class PoseManager(object):
                 if bb_rmsd > rmsd_threshold:
                     continue
                 # remove overlap residues before anyone notices
-                loop_pose.delete_residue_range_slow(
-                    loop_pose.size(), loop_pose.size()
-                )
-                loop_pose.delete_residue_range_slow(1, 1)
+                trim_pose(loop_pose, 2, loop_pose.size() - 1)
 
                 # Save this structure to container for later
                 passing_loops.append(
