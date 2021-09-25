@@ -265,7 +265,7 @@ def main(
             this_pose_hits_mask = (flat_key_mask[pose_num_mask]).astype(
                 np.bool
             )
-            n_hits = np.nonzero(this_pose_hits_mask)
+            n_hits = this_pose_hits_mask.sum()
             if n_hits == 0:
                 continue
 
@@ -273,7 +273,7 @@ def main(
             hits_before_mask = (flat_key_mask[poses_before_mask]).astype(
                 np.bool
             )
-            n_hits_before = np.nonzero(hits_before_mask)
+            n_hits_before = hits_before_mask.sum()
 
             this_pose_gp_vals = gp_vals[n_hits_before : n_hits_before + n_hits]
 
