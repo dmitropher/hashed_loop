@@ -215,7 +215,7 @@ class PoseManager(object):
             # load and align loops, save rmsd thresh passing ones to dict with some metadata
             closure_list = self.get_closure_list(c1, c2)
             if max_check_depth_per_closure_list:
-                closure_list = closure_list[max_check_depth_per_closure_list]
+                closure_list = closure_list[:max_check_depth_per_closure_list]
             for closure in closure_list:
                 loop_string = closure.archive_string
                 tag, start, end = loop_string.split(":")
