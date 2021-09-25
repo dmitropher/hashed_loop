@@ -43,7 +43,7 @@ class PoseManager(object):
         """
         self._npose = nup.npose_from_pose(self.pose)
         self._tpose = nu.tpose_from_npose(self._npose)
-        self._itpose = nu.itpose_from_tpose(self._npose)
+        self._itpose = nu.itpose_from_tpose(self._tpose)
 
     def get_closure_xforms(self, chain_from, chain_to):
         """
