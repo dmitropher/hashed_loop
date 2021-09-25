@@ -6,7 +6,7 @@ import numpy as np
 import npose_util as nu
 import npose_util_pyrosetta as nup
 
-from hashed_loop import (
+from .hashed_loop import (
     sfd_tag_slice,
     align_and_get_rmsd,
     link_poses,
