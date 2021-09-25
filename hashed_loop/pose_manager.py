@@ -1,3 +1,9 @@
+import logging
+
+logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.ERROR)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 from itertools import product
 from collections import namedtuple
 
@@ -198,7 +204,7 @@ class PoseManager(object):
             loop_main_dict[(c1, c2)] = passing_loops
 
             # load and align loops, save rmsd thresh passing ones to dict with some metadata
-            for closure in self.get_closure_list(self, c1, c2):
+            for closure in self.get_closure_list(c1, c2):
                 loop_string = closure.archive_string
                 tag, start, end = loop_string.split(":")
                 start = int(start)
@@ -235,6 +241,8 @@ class PoseManager(object):
             passing_loops.sort(key=lambda lc: lc.rmsd)
             passing_loops = passing_loops[:loop_count_per_closure]
         if not (allow_incomplete) and not (all(loop_main_dict.values())):
+            logger.debug("not all loops closed!")
+            logger.debug("loop_main_dict.values(): {loop_main_dict.values()}")
             return
 
         # Careful, assumes you're not doing circular permutations
