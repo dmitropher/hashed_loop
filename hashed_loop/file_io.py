@@ -3,7 +3,7 @@ import math
 import h5py
 import pyrosetta
 
-
+# TODO gp_dict caching in resources
 def safe_load_pdbs(pdbs):
     for pdb in pdbs:
         try:

@@ -1,5 +1,9 @@
 import pandas as pd
 
+# TODO: closed yes/no
+# TODO: Summary Tables for pose (all closed,n chains to close, worst/best rmsd)
+# TODO: Table validation reporting (resl closed at, edge effect reporting)
+
 
 class ScoreManager(object):
     """
