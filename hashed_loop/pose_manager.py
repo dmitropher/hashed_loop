@@ -142,8 +142,6 @@ class PoseManager(object):
             ]
             dc = DataContainer(catalog_set, archive_data)
             self._closure_hits[chain_closure_key] = dc
-            logger.debug(f"closure recorded: {dc}")
-            logger.debug(f"data: {archive_data}")
         else:
             catalog_set = existing_data_container.catalog_set
             closure_data_list = existing_data_container.closure_data_list
@@ -164,6 +162,8 @@ class PoseManager(object):
             )
             catalog_set.update(catalog_data)
             closure_data_list.extend(archive_data)
+            dc = DataContainer(catalog_set, archive_data)
+            self._closure_hits[chain_closure_key] = dc
 
     def get_closure_list(self, c1, c2):
         """
@@ -172,12 +172,15 @@ class PoseManager(object):
         Returns empty list otherwise (not None!)
         Try not to edit this list in place, it is not a copy
         """
-
-        data_container = self._closure_hits.get((c1, c2))
+        chain_closure_key = (c1, c2)
+        logger.debug(f"getting closures for: {chain_closure_key}")
+        data_container = self._closure_hits.get(chain_closure_key)
         if data_container is None:
             # TODO handle incomplete closures gracefully
+            logger.debug("None found!")
             return []
         else:
+            logger.debug("returning closures: {data_container.closure_list}")
             return data_container.closure_data_list
 
     def build_and_dump_closures(
@@ -203,6 +206,8 @@ class PoseManager(object):
 
         for c1 in range(1, n_chains):
             c2 = c1 + 1
+            logger.debug(f"c1: {c1}")
+            logger.debug(f"c2: {c2}")
             passing_loops = []
             loop_main_dict[(c1, c2)] = passing_loops
 
