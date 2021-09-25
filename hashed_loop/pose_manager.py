@@ -182,11 +182,11 @@ class PoseManager(object):
         out_path=".",
         rechain=False,
         allow_incomplete=False,
+        score_manager=None,
     ):
         """
         Attempts to build loop closures for this pose, returns a closure report
         """
-        # initialize report object here
         n_chains = self.pose.num_chains()
         min_size, max_size = insertion_length_per_closure
 
@@ -219,7 +219,10 @@ class PoseManager(object):
                     closure.res_i_start,
                     closure.res_i_end,
                 )
-                # reporting here
+                if not score_manager is None:
+                    score_manager.add_score_data(
+                        bb_rmsd, self.pose, closure, c1, c2
+                    )
                 if bb_rmsd > rmsd_threshold:
                     continue
                 # remove overlap residues before anyone notices

@@ -628,3 +628,16 @@ def get_closure_hits(xbin_keys_array, hf5_dataset):
     archive_values = gp_dict[found_keys].view(np.int32).reshape(-1, 2)
 
     return archive_values, key_mask
+
+
+def trim_pose(pose, begin, end):
+    """
+    returns the pose from index begin to end
+
+    Syntactic sugar to clean up pose dumping func
+    """
+
+    if not ((end is None) or end == pose.size()):
+        pose.delete_residue_range_slow(end + 1, pose.size())
+    if not ((begin is None) or begin == 1):
+        pose.delete_residue_range_slow(1, begin - 1)

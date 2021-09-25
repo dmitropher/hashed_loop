@@ -20,6 +20,7 @@ from hashed_loop import (
     get_closure_hits,
 )
 from pose_manager import PoseManager as poseman
+from scoring import ScoreManager
 
 from hashed_loop.file_io import (
     default_hdf5,
@@ -293,6 +294,7 @@ def main(
                     loop_bytes.decode("UTF-8") for loop_bytes in tag_entries
                 ]
                 this_pm.record_closures(c1, c2, res_i_1, res_i_2, loop_strings)
+    scoreman = ScoreManager()
     for pm in pose_mans:
         pm.build_and_dump_closures(
             silent_index,
@@ -304,7 +306,9 @@ def main(
             out_path=".",
             rechain=False,
             allow_incomplete=False,
+            score_manager=scoreman,
         )
+    scoreman.to_csv("closure_data.csv")
 
     # df.to_csv("closure_data.csv")
     hdf5.close()
