@@ -6,6 +6,7 @@ from shutil import copyfile, move
 @click.command()
 @click.argument("store_path")
 @click.argument("silent_path")
+@click.option("-l", "link_mode", is_flag=True, default=False)
 def main(store_path, silent_path, link_mode=False):
     """
     Register the silent and data table, link_mode makes symlinks instead of copy
