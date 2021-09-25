@@ -255,8 +255,9 @@ class PoseManager(object):
                 passing_loops.append(
                     LoopContainer(loop_pose, closure, bb_rmsd)
                 )
-
-                loop_main_dict[(c1, c2)] = passing_loops
+                if len(passing_loops) >= loop_count_per_closure:
+                    continue
+                # loop_main_dict[(c1, c2)] = passing_loops
 
             passing_loops.sort(key=lambda lc: lc.rmsd)
             passing_loops = passing_loops[:loop_count_per_closure]
