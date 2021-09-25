@@ -246,6 +246,8 @@ def main(
         xbin_keys = binner.get_bin_index(np.array(all_xforms))
 
         gp_vals, key_mask = get_closure_hits(xbin_keys, kv_ds)
+        logger.debug(f"gp_vals: {gp_vals}")
+        logger.debug(f"key_mask: {key_mask}")
         flat_key_mask = key_mask.flatten()  # not sure why this isn't flat?
 
         # this is legacy from when there was one check per pose:
