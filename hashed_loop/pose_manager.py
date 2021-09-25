@@ -180,7 +180,9 @@ class PoseManager(object):
             logger.debug("None found!")
             return []
         else:
-            logger.debug(f"returning closures: {data_container.closure_list}")
+            logger.debug(
+                f"returning closures: {data_container.closure_data_list}"
+            )
             return data_container.closure_data_list
 
     def build_and_dump_closures(
