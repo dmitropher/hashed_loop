@@ -264,10 +264,10 @@ class PoseManager(object):
             loop_main_dict[(c1, c2)] = passing_loops
         if not (allow_incomplete) and not (all(loop_main_dict.values())):
             logger.debug("not all loops closed!")
-            logger.debug(f"loop_main_dict.values(): {loop_main_dict.values()}")
+            logger.debug(f"loop_main_dict.items(): {loop_main_dict.items()}")
             return
         logger.debug("All loops closed!")
-        logger.debug(f"loop_main_dict.values(): {loop_main_dict.values()}")
+        logger.debug(f"loop_main_dict.items(): {loop_main_dict.items()}")
 
         # Careful, assumes you're not doing circular permutations
         sorted_chain_keys, loop_vals = zip(
