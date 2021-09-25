@@ -73,7 +73,8 @@ class PoseManager(object):
                     range(trim_back_to, from_chain_end_index + 1),
                     range(to_chain_start_index, trim_forward_to + 1),
                 )
-            )
+            ),
+            dtype=np.int,
         )
         # 0-indexing for array accession
         from_to_npose_indices = from_to_indices - 1
@@ -242,7 +243,7 @@ class PoseManager(object):
             passing_loops = passing_loops[:loop_count_per_closure]
         if not (allow_incomplete) and not (all(loop_main_dict.values())):
             logger.debug("not all loops closed!")
-            logger.debug("loop_main_dict.values(): {loop_main_dict.values()}")
+            logger.debug(f"loop_main_dict.values(): {loop_main_dict.values()}")
             return
 
         # Careful, assumes you're not doing circular permutations
