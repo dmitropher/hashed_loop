@@ -222,7 +222,7 @@ def main(
             (res_indices, this_pm_res_indices), axis=0
         )
         this_poses_mask = np.full(n_xforms, struct_num)
-        poses_mask = np.concatenate(poses_mask, this_poses_mask)
+        poses_mask = np.concatenate((poses_mask, this_poses_mask))
 
     num_poses = len(pose_mans)
 
