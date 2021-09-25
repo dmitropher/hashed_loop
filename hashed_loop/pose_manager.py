@@ -180,7 +180,7 @@ class PoseManager(object):
             logger.debug("None found!")
             return []
         else:
-            logger.debug("returning closures: {data_container.closure_list}")
+            logger.debug(f"returning closures: {data_container.closure_list}")
             return data_container.closure_data_list
 
     def build_and_dump_closures(
@@ -206,8 +206,6 @@ class PoseManager(object):
 
         for c1 in range(1, n_chains):
             c2 = c1 + 1
-            logger.debug(f"c1: {c1}")
-            logger.debug(f"c2: {c2}")
             passing_loops = []
             loop_main_dict[(c1, c2)] = passing_loops
 
@@ -219,6 +217,8 @@ class PoseManager(object):
                 end = int(end)
                 insertion_size = end - start - 1
                 if not (min_size <= insertion_size <= max_size):
+                    logger.debug(f"insertion size mismatch")
+                    logger.debug(f"{min_size} , {insertion_size} , {max_size}")
                     continue
                 try:
                     loop_pose = sfd_tag_slice(
@@ -238,6 +238,9 @@ class PoseManager(object):
                         bb_rmsd, self.pose, closure, c1, c2
                     )
                 if bb_rmsd > rmsd_threshold:
+                    logger.debug(
+                        f"rmsd_threshold not met: {bb_rmsd} > {rmsd_threshold}"
+                    )
                     continue
                 # remove overlap residues before anyone notices
                 trim_pose(loop_pose, 2, loop_pose.size() - 1)
@@ -246,8 +249,10 @@ class PoseManager(object):
                 passing_loops.append(
                     LoopContainer(loop_pose, closure, bb_rmsd)
                 )
+
             passing_loops.sort(key=lambda lc: lc.rmsd)
             passing_loops = passing_loops[:loop_count_per_closure]
+            loop_main_dict[(c1, c2)] = passing_loops
         if not (allow_incomplete) and not (all(loop_main_dict.values())):
             logger.debug("not all loops closed!")
             logger.debug(f"loop_main_dict.values(): {loop_main_dict.values()}")
