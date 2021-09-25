@@ -147,7 +147,7 @@ class PoseManager(object):
             closure_data_list = existing_data_container.closure_data_list
             archive_data, catalog_data = zip(
                 *[
-                    (
+                    [
                         ClosureData(
                             archive_string,
                             res_i_start,
@@ -156,7 +156,7 @@ class PoseManager(object):
                             ori_resl,
                         ),
                         (archive_string, res_i_start, res_i_end),
-                    )
+                    ]
                     for archive_string in loop_strings
                 ]
             )
