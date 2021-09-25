@@ -93,11 +93,11 @@ class PoseManager(object):
         for (c1, c2) in chain_pairs:
             xforms, from_to_indices = self.get_closure_xforms(c1, c2)
             n_indices = from_to_indices.shape[0]
-            c1_mask = np.full(n_indices, c1).T
-            c2_mask = np.full(n_indices, c2).T
+            c1_mask = np.full(n_indices, c1)
+            c2_mask = np.full(n_indices, c2)
             chain_mask = np.concatenate(
                 (c1_mask[np.newaxis, :], c2_mask[np.newaxis, :]), axis=0
-            )
+            ).T
             chain_mask_list.extend(chain_mask)
             index_mask_list.extend(from_to_indices)
             all_xforms_list.extend(xforms)
