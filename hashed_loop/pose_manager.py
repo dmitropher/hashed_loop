@@ -177,12 +177,12 @@ class PoseManager(object):
         data_container = self._closure_hits.get(chain_closure_key)
         if data_container is None:
             # TODO handle incomplete closures gracefully
-            logger.debug("None found!")
+            # logger.debug("None found!")
             return []
         else:
-            logger.debug(
-                f"returning closures: {data_container.closure_data_list}"
-            )
+            # logger.debug(
+            #     f"returning closures: {data_container.closure_data_list}"
+            # )
             return data_container.closure_data_list
 
     def build_and_dump_closures(
@@ -255,6 +255,8 @@ class PoseManager(object):
                 passing_loops.append(
                     LoopContainer(loop_pose, closure, bb_rmsd)
                 )
+
+                loop_main_dict[(c1, c2)] = passing_loops
 
             passing_loops.sort(key=lambda lc: lc.rmsd)
             passing_loops = passing_loops[:loop_count_per_closure]
