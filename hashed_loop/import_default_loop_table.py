@@ -23,9 +23,9 @@ def main(store_path, silent_path, link_mode=False):
     os.makedirs(os.path.dirname(dest_path_silent), exist_ok=True)
     if link_mode:
         if os.path.isfile(dest_path_store):
-            move(dest_path_store + ".old")
+            move(dest_path_store, dest_path_store + ".old")
         if os.path.isfile(dest_path_silent):
-            move(dest_path_silent + ".old")
+            move(dest_path_silent, dest_path_store + ".old")
         os.symlink(store_path, dest_path_store)
         os.symlink(silent_path, dest_path_silent)
     else:
