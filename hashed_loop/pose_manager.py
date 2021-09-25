@@ -197,6 +197,7 @@ class PoseManager(object):
         rechain=False,
         allow_incomplete=False,
         score_manager=None,
+        max_check_depth_per_closure_list=150,
     ):
         """
         Attempts to build loop closures for this pose, returns a closure report
@@ -212,15 +213,18 @@ class PoseManager(object):
             loop_main_dict[(c1, c2)] = passing_loops
 
             # load and align loops, save rmsd thresh passing ones to dict with some metadata
-            for closure in self.get_closure_list(c1, c2):
+            closure_list = self.get_closure_list(c1, c2)
+            if max_check_depth_per_closure_list:
+                closure_list = closure_list[max_check_depth_per_closure_list]
+            for closure in closure_list:
                 loop_string = closure.archive_string
                 tag, start, end = loop_string.split(":")
                 start = int(start)
                 end = int(end)
                 insertion_size = end - start - 1
                 if not (min_size <= insertion_size <= max_size):
-                    logger.debug(f"insertion size mismatch")
-                    logger.debug(f"{min_size} , {insertion_size} , {max_size}")
+                    # logger.debug(f"insertion size mismatch")
+                    # logger.debug(f"{min_size} , {insertion_size} , {max_size}")
                     continue
                 try:
                     loop_pose = sfd_tag_slice(
@@ -240,9 +244,9 @@ class PoseManager(object):
                         bb_rmsd, self.pose, closure, c1, c2
                     )
                 if bb_rmsd > rmsd_threshold:
-                    logger.debug(
-                        f"rmsd_threshold not met: {bb_rmsd} > {rmsd_threshold}"
-                    )
+                    # logger.debug(
+                    #     f"rmsd_threshold not met: {bb_rmsd} > {rmsd_threshold}"
+                    # )
                     continue
                 # remove overlap residues before anyone notices
                 trim_pose(loop_pose, 2, loop_pose.size() - 1)
