@@ -62,7 +62,7 @@ class PoseManager(object):
         """
         pose_end = self.pose.size()
         from_chain_end_index = self.pose.chain_end(chain_from)
-        to_chain_start_index = self.pose.chain_end(chain_to)
+        to_chain_start_index = self.pose.chain_begin(chain_to)
         trim_back_to = max(from_chain_end_index - self.allowed_trim_depth, 1)
         trim_forward_to = min(
             to_chain_start_index + self.allowed_trim_depth, pose_end
