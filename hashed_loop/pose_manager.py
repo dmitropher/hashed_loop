@@ -162,7 +162,7 @@ class PoseManager(object):
             )
             catalog_set.update(catalog_data)
             closure_data_list.extend(archive_data)
-            dc = DataContainer(catalog_set, archive_data)
+            dc = DataContainer(catalog_set, closure_data_list)
             self._closure_hits[chain_closure_key] = dc
 
     def get_closure_list(self, c1, c2):
