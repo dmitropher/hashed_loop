@@ -327,7 +327,7 @@ def main(
             allow_incomplete=False,
             score_manager=scoreman,
         )
-    scoreman.to_csv("closure_data.csv")
+        scoreman.to_csv("closure_data.csv")
 
     # df.to_csv("closure_data.csv")
     hdf5.close()
