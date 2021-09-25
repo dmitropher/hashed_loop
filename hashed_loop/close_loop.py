@@ -19,8 +19,8 @@ from hashed_loop import (
     silent_preload,
     get_closure_hits,
 )
-from pose_manager import PoseManager as poseman
-from scoring import ScoreManager
+from hashed_loop.pose_manager import PoseManager as poseman
+from hashed_loop.scoring import ScoreManager
 
 from hashed_loop.file_io import (
     default_hdf5,

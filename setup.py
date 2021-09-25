@@ -22,7 +22,7 @@ setup(
     entry_points={
         "console_scripts": [
             "import_default_loop_table = hashed_loop.import_default_loop_table:main",
-            "close_loop = hashed_loop.close_loop:main",
+            "close_loop = hashed_loop.close_loop.close_loop:main",
             "build_hash_loop_table = hashed_loop.build_hash_loop_table:main",
         ]
     },
