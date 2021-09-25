@@ -245,6 +245,8 @@ class PoseManager(object):
             logger.debug("not all loops closed!")
             logger.debug(f"loop_main_dict.values(): {loop_main_dict.values()}")
             return
+        logger.debug("All loops closed!")
+        logger.debug(f"loop_main_dict.values(): {loop_main_dict.values()}")
 
         # Careful, assumes you're not doing circular permutations
         sorted_chain_keys, loop_vals = zip(

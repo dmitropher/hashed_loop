@@ -304,7 +304,9 @@ def main(
                 loop_strings = [
                     loop_bytes.decode("UTF-8") for loop_bytes in tag_entries
                 ]
-                this_pm.record_closures(c1, c2, res_i_1, res_i_2, loop_strings)
+                this_pm.record_closures(
+                    c1, c2, int(res_i_1), int(res_i_2), loop_strings
+                )
     scoreman = ScoreManager()
     for pm in pose_mans:
         pm.build_and_dump_closures(
