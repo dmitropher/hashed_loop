@@ -142,6 +142,8 @@ class PoseManager(object):
             ]
             dc = DataContainer(catalog_set, archive_data)
             self._closure_hits[chain_closure_key] = dc
+            logger.debug(f"closure recorded: {dc}")
+            logger.debug(f"data: {archive_data}")
         else:
             catalog_set = existing_data_container.catalog_set
             closure_data_list = existing_data_container.closure_data_list

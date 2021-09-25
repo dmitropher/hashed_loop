@@ -41,4 +41,5 @@ class ScoreManager(object):
         """
         Builds and outputs the
         """
+        self.build_df_from_data()
         self._main_df.to_csv(path)
