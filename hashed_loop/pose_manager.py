@@ -247,9 +247,7 @@ class PoseManager(object):
                         bb_rmsd, self.pose, closure, c1, c2
                     )
                 if bb_rmsd > rmsd_threshold:
-                    # logger.debug(
-                    #     f"rmsd_threshold not met: {bb_rmsd} > {rmsd_threshold}"
-                    # )
+
                     continue
                 # remove overlap residues before anyone notices
                 trim_pose(loop_pose, 2, loop_pose.size() - 1)
