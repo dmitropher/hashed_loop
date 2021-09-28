@@ -12,6 +12,8 @@ import numpy as np
 import npose_util as nu
 import npose_util_pyrosetta as nup
 
+from hashed_loop.fake_npose import tpose_from_npose, itpose_from_tpose
+
 from .hashed_loop import (
     sfd_tag_slice,
     align_and_get_rmsd,
@@ -48,8 +50,8 @@ class PoseManager(object):
         Try not to do this...
         """
         self._npose = nup.npose_from_pose(self.pose)
-        self._tpose = nu.tpose_from_npose(self._npose)
-        self._itpose = nu.itpose_from_tpose(self._tpose)
+        self._tpose = tpose_from_npose(self._npose)
+        self._itpose = itpose_from_tpose(self._tpose)
 
     def get_closure_xforms(self, chain_from, chain_to):
         """
