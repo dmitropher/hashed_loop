@@ -468,7 +468,7 @@ def align_and_get_rmsd(
         loop_pose,
         target_subset,
         aligned_loop_subset,
-        superimpose=True,
+        superimpose=False,
     )
     return endpoint_bb_rmsd
 
