@@ -9,7 +9,7 @@ from collections import namedtuple
 
 import numpy as np
 
-import npose_util as nu
+# import npose_util as nu
 import npose_util_pyrosetta as nup
 
 from hashed_loop.fake_npose import tpose_from_npose, itpose_from_tpose

@@ -198,7 +198,7 @@ def main(
     chains_from_to = np.empty((0, 2))
     res_indices = np.empty((0, 2))
     poses_mask = np.empty(0)
-    rosetta_xforms = np.empty((0, 4, 4))
+    # rosetta_xforms = np.empty((0, 4, 4))
     # don't be fooled, the man is for manager, not some sort of dated superhero-like alias
     pose_mans = []
 
@@ -225,17 +225,17 @@ def main(
         )
         this_poses_mask = np.full(n_xforms, struct_num)
         poses_mask = np.concatenate((poses_mask, this_poses_mask))
-        this_pose_rosetta_xforms = np.array(
-            [
-                np_rt_from_residues(
-                    target_pose.residue(r1), target_pose.residue(r2)
-                )
-                for (r1, r2) in this_pm_res_indices
-            ]
-        )
-        rosetta_xforms = np.concatenate(
-            (rosetta_xforms, this_pose_rosetta_xforms), axis=0
-        )
+        # this_pose_rosetta_xforms = np.array(
+        #     [
+        #         np_rt_from_residues(
+        #             target_pose.residue(r1), target_pose.residue(r2)
+        #         )
+        #         for (r1, r2) in this_pm_res_indices
+        #     ]
+        # )
+        # rosetta_xforms = np.concatenate(
+        #     (rosetta_xforms, this_pose_rosetta_xforms), axis=0
+        # )
 
     num_poses = len(pose_mans)
 
@@ -256,10 +256,10 @@ def main(
         xbin_ori = kv_ds.attrs["ori_resl"]
         binner = xb(ori_resl=xbin_ori, cart_resl=xbin_cart)
         xbin_keys = binner.get_bin_index(np.array(all_xforms))
-        r_xbin_keys = binner.get_bin_index(np.array(rosetta_xforms))
+        # r_xbin_keys = binner.get_bin_index(np.array(rosetta_xforms))
 
-        logger.debug(f"xbin_keys: {xbin_keys}")
-        logger.debug(f"r_xbin_keys: {r_xbin_keys}")
+        # logger.debug(f"xbin_keys: {xbin_keys}")
+        # logger.debug(f"r_xbin_keys: {r_xbin_keys}")
 
         gp_vals, key_mask = get_closure_hits(xbin_keys, kv_ds)
         logger.debug(f"gp_vals: {gp_vals}")
