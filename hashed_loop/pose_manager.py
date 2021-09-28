@@ -228,7 +228,7 @@ class PoseManager(object):
                     continue
                 try:
                     loop_pose = sfd_tag_slice(
-                        s_index, s_out, silent_archive, tag, start, end + 1
+                        s_index, s_out, silent_archive, tag, start, end  # + 1
                     )
                 except AssertionError:
                     continue
