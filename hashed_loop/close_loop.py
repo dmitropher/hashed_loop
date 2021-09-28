@@ -226,19 +226,18 @@ def main(
 
     num_poses = len(pose_mans)
 
-    loops = np.zeros(num_poses)
+    # loops = np.zeros(num_poses)
 
     for kv_ds in sorted_ds_list:
-        unclosed_mask = loops < loop_count_per_closure
-        unclosed = loops[unclosed_mask]
-        logger.debug(f"unclosed: {unclosed}")
-        if unclosed.shape[0] == 0:
-            logger.debug(
-                f"Desired number of outputs found, not scanning bigger tables"
-            )
-            break
+        # unclosed_mask = loops < loop_count_per_closure
+        # unclosed = loops[unclosed_mask]
+        # logger.debug(f"unclosed: {unclosed}")
+        # if unclosed.shape[0] == 0:
+        #     logger.debug(
+        #         f"Desired number of outputs found, not scanning bigger tables"
+        #     )
+        #     break
         logger.debug("building hashmap from archive")
-        logger.debug(f"kv_ds.dtype: {kv_ds.dtype}")
 
         xbin_cart = kv_ds.attrs["cart_resl"]
         xbin_ori = kv_ds.attrs["ori_resl"]
@@ -259,6 +258,7 @@ def main(
         string_ds = retrieve_string_archive(hdf5, xbin_cart, xbin_ori)
 
         for pose_number in range(num_poses):
+            logger.debug(f"pose number: {pose_number}")
             # cut all arrays down to just pose of interest
             pose_num_mask = (poses_mask == pose_number).astype(np.bool)
 
@@ -266,6 +266,10 @@ def main(
                 np.bool
             )
             n_hits = this_pose_hits_mask.sum()
+            logger.debug(f"pose_num_mask: {pose_num_mask}")
+            logger.debug(f"this_pose_hits_mask: {this_pose_hits_mask}")
+            logger.debug(f"n_hits: {n_hits}")
+
             if n_hits == 0:
                 continue
 
