@@ -145,23 +145,29 @@ class PoseManager(object):
         else:
             catalog_set = existing_data_container.catalog_set
             closure_data_list = existing_data_container.closure_data_list
-            archive_data, catalog_data = zip(
-                *[
-                    [
-                        ClosureData(
-                            archive_string,
-                            res_i_start,
-                            res_i_end,
-                            cart_resl,
-                            ori_resl,
-                        ),
-                        (archive_string, res_i_start, res_i_end),
+            try:
+                archive_data, catalog_data = zip(
+                    *[
+                        [
+                            ClosureData(
+                                archive_string,
+                                res_i_start,
+                                res_i_end,
+                                cart_resl,
+                                ori_resl,
+                            ),
+                            (archive_string, res_i_start, res_i_end),
+                        ]
+                        for archive_string in loop_strings
+                        if not (
+                            (archive_string, res_i_start, res_i_end)
+                            in catalog_set
+                        )
                     ]
-                    for archive_string in loop_strings
-                    if not (archive_string, res_i_start, res_i_end)
-                    in catalog_set
-                ]
-            )
+                )
+            except ValueError:
+                logger.debug("All closures for this res pair already recorded")
+                return
 
             closure_data_list.append(archive_data)
             catalog_set.update(catalog_data)
