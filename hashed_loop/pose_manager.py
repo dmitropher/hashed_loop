@@ -80,8 +80,8 @@ class PoseManager(object):
         )
         # 0-indexing for array accession
         from_to_npose_indices = from_to_indices - 1
-        logger.debug(f"from_to_indices: {from_to_indices}")
-        logger.debug(f"from_to_npose_indices: {from_to_npose_indices}")
+        # logger.debug(f"from_to_indices: {from_to_indices}")
+        # logger.debug(f"from_to_npose_indices: {from_to_npose_indices}")
         # These are non-boolean integer index masks
         from_mask = from_to_npose_indices[:, 0]
         to_mask = from_to_npose_indices[:, 1]
