@@ -81,7 +81,7 @@ class PoseManager(object):
         # These are non-boolean integer index masks
         from_mask = from_to_npose_indices[:, 0]
         to_mask = from_to_npose_indices[:, 1]
-        xforms = self._itpose[from_mask] @ self._tpose[to_mask]
+        xforms = self._itpose[from_mask, :, :] @ self._tpose[to_mask, :, :]
         return xforms, from_to_indices
 
     def get_all_closure_xforms(self, *chain_pairs):
