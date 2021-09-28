@@ -234,7 +234,7 @@ def main(
             ]
         )
         rosetta_xforms = np.concatenate(
-            (rosetta_xforms, this_pose_rosetta_xforms)
+            (rosetta_xforms, this_pose_rosetta_xforms), axis=0
         )
 
     num_poses = len(pose_mans)
