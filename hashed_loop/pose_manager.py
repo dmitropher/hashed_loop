@@ -158,10 +158,13 @@ class PoseManager(object):
                         (archive_string, res_i_start, res_i_end),
                     ]
                     for archive_string in loop_strings
+                    if not (archive_string, res_i_start, res_i_end)
+                    in catalog_set
                 ]
             )
+
+            closure_data_list.append(archive_data)
             catalog_set.update(catalog_data)
-            closure_data_list.extend(archive_data)
             dc = DataContainer(catalog_set, closure_data_list)
             self._closure_hits[chain_closure_key] = dc
 
@@ -228,7 +231,7 @@ class PoseManager(object):
                     continue
                 try:
                     loop_pose = sfd_tag_slice(
-                        s_index, s_out, silent_archive, tag, start, end  # + 1
+                        s_index, s_out, silent_archive, tag, start, end
                     )
                 except AssertionError:
                     continue
