@@ -18,7 +18,7 @@ from hashed_loop import (
     poses_from_silent,
     silent_preload,
     get_closure_hits,
-    rt_from_residues,
+    np_rt_from_residues,
 )
 from hashed_loop.pose_manager import PoseManager as poseman
 from hashed_loop.scoring import ScoreManager
@@ -227,7 +227,7 @@ def main(
         poses_mask = np.concatenate((poses_mask, this_poses_mask))
         this_pose_rosetta_xforms = np.array(
             [
-                rt_from_residues(
+                np_rt_from_residues(
                     target_pose.residue(r1), target_pose.residue(r2)
                 )
                 for (r1, r2) in this_pm_res_indices
