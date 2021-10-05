@@ -118,7 +118,10 @@ def retrieve_gp_dict_from_cache(ori, cart, key_type, value_type):
     os.makedirs(dest_path_gp_cache_dir, exist_ok=True)
     try:
         with open(dest_path_gp_cache_dir + "/hashmaps.json", "r") as f:
-            index_dict = json.load(f)
+            try:
+                index_dict = json.load(f)
+            except json.decoder.JSONDecodeError:
+                return None
         name = index_dict.get((ori, cart))
         if name is None:
             return
