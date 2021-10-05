@@ -105,7 +105,7 @@ def cache_gp_dict(gp_dict, ori, cart):
     except FileNotFoundError:
         index_dict = {(ori, cart): name}
     with open(dest_path_gp_cache_dir + "/hashmaps.json", "w") as f:
-        json.dump(index_dict)
+        json.dump(index_dict, f)
 
 
 def retrieve_gp_dict_from_cache(ori, cart, key_type, value_type):
