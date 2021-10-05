@@ -186,7 +186,7 @@ class PoseManager(object):
         Try not to edit this list in place, it is not a copy
         """
         chain_closure_key = (c1, c2)
-        logger.debug(f"getting closures for: {chain_closure_key}")
+        # logger.debug(f"getting closures for: {chain_closure_key}")
         data_container = self._closure_hits.get(chain_closure_key)
         if data_container is None:
             # TODO handle incomplete closures gracefully
