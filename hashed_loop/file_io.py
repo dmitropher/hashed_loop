@@ -134,5 +134,5 @@ def retrieve_gp_dict_from_cache(ori, cart, key_type, value_type):
         return
 
     gp_dict = gp.Dict(key_type, value_type)
-    gp_dict.load("test/test.hashtable.bin")
+    gp_dict.load(dest_path_gp_cache_dir + "/" + name)
     return gp_dict
