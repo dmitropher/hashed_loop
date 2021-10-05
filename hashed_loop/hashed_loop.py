@@ -613,7 +613,7 @@ def get_closure_hits(xbin_keys_array, hf5_dataset):
     gp_keys = np.array(hf5_dataset[:, 0])  # .astype(np.int64)
     gp_vals = np.array(hf5_dataset[:, 1:])  # .astype(np.int64)
 
-    gp_vals = gp_vals.view(np.int32).reshape(-1)
+    gp_vals = gp_vals.astype(np.int32).reshape(-1)
     gp_vals = gp_vals.view(np.int64)
 
     gp_dict[gp_keys] = gp_vals
