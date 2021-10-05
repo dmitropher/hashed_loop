@@ -2,6 +2,8 @@ import os
 import math
 import h5py
 import pyrosetta
+import json
+import getpy as gp
 
 # TODO gp_dict caching in resources
 def safe_load_pdbs(pdbs):
@@ -82,3 +84,47 @@ def get_sorted_ds_list(hdf5):
         ),
     )
     return sorted_ds_list
+
+
+def cache_gp_dict(gp_dict, ori, cart):
+    """
+    Caches the Parallel Hashmap for future runs
+
+    Makes no distinction between key/value type in the hashmap
+    """
+    dest_path_gp_cache_dir = os.path.join(
+        os.path.dirname(__file__), "cache/gp_dicts/"
+    )
+    os.makedirs(dest_path_gp_cache_dir, exist_ok=True)
+    name = f"o{ori}_c{cart}.bin"
+    gp_dict.dump(dest_path_gp_cache_dir + name)
+    try:
+        with open(dest_path_gp_cache_dir + "/hashmaps.json", "r") as f:
+            index_dict = json.load(f)
+        index_dict[(ori, cart)] = name
+    except FileNotFoundError:
+        index_dict = {(ori, cart): name}
+    with open(dest_path_gp_cache_dir + "/hashmaps.json", "w") as f:
+        json.dump(index_dict)
+
+
+def retrieve_gp_dict_from_cache(ori, cart, key_type, value_type):
+    """
+    Checks cache for gp_dict, returns None if not found
+    """
+    dest_path_gp_cache_dir = os.path.join(
+        os.path.dirname(__file__), "cache/gp_dicts/"
+    )
+    os.makedirs(dest_path_gp_cache_dir, exist_ok=True)
+    try:
+        with open(dest_path_gp_cache_dir + "/hashmaps.json", "r") as f:
+            index_dict = json.load(f)
+        name = index_dict.get((ori, cart))
+        if name is None:
+            return
+    except FileNotFoundError:
+        return
+
+    gp_dict = gp.Dict(key_type, value_type)
+    gp_dict.load("test/test.hashtable.bin")
+    return gp_dict
