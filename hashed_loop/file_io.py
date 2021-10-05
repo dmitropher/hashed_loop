@@ -98,14 +98,15 @@ def cache_gp_dict(gp_dict, ori, cart):
     os.makedirs(dest_path_gp_cache_dir, exist_ok=True)
     name = f"o{ori}_c{cart}.bin"
     gp_dict.dump(dest_path_gp_cache_dir + name)
+    key = f"{(ori, cart)}"
     try:
         with open(dest_path_gp_cache_dir + "/hashmaps.json", "r") as f:
             index_dict = json.load(f)
-        index_dict[(ori, cart)] = name
+        index_dict[key] = name
     except FileNotFoundError:
-        index_dict = {(ori, cart): name}
+        index_dict = {key: name}
     except json.decoder.JSONDecodeError:
-        index_dict = {(ori, cart): name}
+        index_dict = {key: name}
 
     with open(dest_path_gp_cache_dir + "/hashmaps.json", "w") as f:
         json.dump(index_dict, f)
@@ -119,10 +120,12 @@ def retrieve_gp_dict_from_cache(ori, cart, key_type, value_type):
         os.path.dirname(__file__), "cache/gp_dicts/"
     )
     os.makedirs(dest_path_gp_cache_dir, exist_ok=True)
+
+    key = f"{(ori, cart)}"
     try:
         with open(dest_path_gp_cache_dir + "/hashmaps.json", "r") as f:
             index_dict = json.load(f)
-        name = index_dict.get((ori, cart))
+        name = index_dict.get(key)
         if name is None:
             return
     except FileNotFoundError:
