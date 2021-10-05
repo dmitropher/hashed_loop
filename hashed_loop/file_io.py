@@ -122,7 +122,9 @@ def retrieve_gp_dict_from_cache(ori, cart, key_type, value_type):
         name = index_dict.get((ori, cart))
         if name is None:
             return
-    except FileNotFoundError or json.decoder.JSONDecodeError:
+    except FileNotFoundError:
+        return
+    except json.decoder.JSONDecodeError:
         return
 
     gp_dict = gp.Dict(key_type, value_type)
