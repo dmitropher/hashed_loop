@@ -2,6 +2,11 @@ import click
 import os
 from shutil import copyfile, move
 
+import h5py
+
+from hashed_loop.file_io import cache_gp_dict
+
+
 # TODO Add link mode to this script so you don't ahve to copy resources every time
 @click.command()
 @click.argument("store_path")
