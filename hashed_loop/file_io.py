@@ -102,8 +102,11 @@ def cache_gp_dict(gp_dict, ori, cart):
         with open(dest_path_gp_cache_dir + "/hashmaps.json", "r") as f:
             index_dict = json.load(f)
         index_dict[(ori, cart)] = name
-    except FileNotFoundError or json.decoder.JSONDecodeError:
+    except FileNotFoundError:
         index_dict = {(ori, cart): name}
+    except json.decoder.JSONDecodeError:
+        index_dict = {(ori, cart): name}
+
     with open(dest_path_gp_cache_dir + "/hashmaps.json", "w") as f:
         json.dump(index_dict, f)
 
