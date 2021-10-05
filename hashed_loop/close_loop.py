@@ -272,8 +272,8 @@ def main(
         if gp_dict is None:
             gp_dict = gp.Dict(key_type, value_type)
 
-            gp_keys = np.array(kv_ds[:, 0])  # .astype(np.int64)
-            gp_vals = np.array(kv_ds[:, 1:])  # .astype(np.int64)
+            gp_keys = np.array(kv_ds[:, 0]).astype(np.int64)
+            gp_vals = np.array(kv_ds[:, 1:]).astype(np.int64)
 
             gp_vals = gp_vals.astype(np.int32).reshape(-1)
             gp_vals = gp_vals.view(np.int64)
