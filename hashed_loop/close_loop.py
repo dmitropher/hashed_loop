@@ -216,7 +216,7 @@ def main(
             poseman(
                 pose=target_pose,
                 allowed_trim_depth=allowed_trim_depth,
-                struct_manager=struct_manager,
+                structure_manager=struct_manager,
             )
         )
         pm = pose_mans[struct_num]
