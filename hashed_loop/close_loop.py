@@ -19,9 +19,9 @@ from hashed_loop import (
     poses_from_silent,
     silent_preload,
     get_closure_hits,
-    np_rt_from_residues,
 )
 from hashed_loop.pose_manager import PoseManager as poseman
+from hashed_loop.pose_manager import StructureManager
 from hashed_loop.scoring import ScoreManager
 
 from hashed_loop.file_io import (
@@ -205,12 +205,19 @@ def main(
     # don't be fooled, the man is for manager, not some sort of dated superhero-like alias
     pose_mans = []
 
+    struct_manager = StructureManager(
+        default_silent(), silent_out, silent_index
+    )
     for struct_num, target_pose in enumerate(
         poses_from_paths(*input_structure_paths, silent_mode=silent_mode)
     ):
         logger.debug("pose obtained")
         pose_mans.append(
-            poseman(pose=target_pose, allowed_trim_depth=allowed_trim_depth)
+            poseman(
+                pose=target_pose,
+                allowed_trim_depth=allowed_trim_depth,
+                struct_manager=struct_manager,
+            )
         )
         pm = pose_mans[struct_num]
 
@@ -243,7 +250,6 @@ def main(
     num_poses = len(pose_mans)
 
     # loops = np.zeros(num_poses)
-
     for kv_ds in sorted_ds_list:
         # unclosed_mask = loops < loop_count_per_closure
         # unclosed = loops[unclosed_mask]
@@ -357,9 +363,6 @@ def main(
     scoreman = ScoreManager()
     for pm in pose_mans:
         pm.build_and_dump_closures(
-            silent_index,
-            silent_out,
-            default_silent(),
             loop_count_per_closure=loop_count_per_closure,
             insertion_length_per_closure=insertion_length_per_closure,
             rmsd_threshold=rmsd_threshold,

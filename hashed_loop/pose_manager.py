@@ -32,16 +32,48 @@ ClosureData = namedtuple(
 LoopContainer = namedtuple("Loop", "pose closure_data rmsd")
 
 
+class StructureManager(object):
+    """
+    Manages loop pose loading and caching in memory
+    """
+
+    def __init__(self, silent_file, silent_out, silent_index):
+        self._silent_file = silent_file
+        self._silent_out = silent_out
+        self._silent_index = silent_index
+        self._loop_dict = {}
+
+    def get_loop(self, archive_string):
+        loop = self._loop_dict.get(archive_string)
+        if loop is None:
+            tag, start, end = archive_string.split(":")
+            start = int(start)
+            end = int(end)
+            loop = sfd_tag_slice(
+                self._silent_index,
+                self._silent_out,
+                self._silent_file,
+                tag,
+                start,
+                end + 1,
+            )
+        self._loop_dict[archive_string] = loop
+        return loop.clone()
+
+
 class PoseManager(object):
     """
     Manages the structure to close
     """
 
-    def __init__(self, pose=None, allowed_trim_depth=0):
+    def __init__(
+        self, pose=None, allowed_trim_depth=0, structure_manager=None
+    ):
         self.pose = pose
         self.allowed_trim_depth = allowed_trim_depth
         self._closure_hits = {}
         self.build_npose()
+        self._structure_manager = structure_manager
 
     def build_npose(self):
         """
@@ -200,9 +232,6 @@ class PoseManager(object):
 
     def build_and_dump_closures(
         self,
-        s_index,
-        s_out,
-        silent_archive,
         loop_count_per_closure=50,
         insertion_length_per_closure=[1, 20],
         rmsd_threshold=0.25,
@@ -239,13 +268,7 @@ class PoseManager(object):
                     # logger.debug(f"insertion size mismatch")
                     # logger.debug(f"{min_size} , {insertion_size} , {max_size}")
                     continue
-                try:
-                    loop_pose = sfd_tag_slice(
-                        s_index, s_out, silent_archive, tag, start, end + 1
-                    )
-                except AssertionError:
-                    continue
-
+                loop_pose = self._structure_manager.get_loop(loop_string)
                 bb_rmsd = align_and_get_rmsd(
                     loop_pose,
                     self.pose,
