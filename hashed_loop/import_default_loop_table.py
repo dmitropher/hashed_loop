@@ -2,9 +2,12 @@ import click
 import os
 from shutil import copyfile, move
 
-import h5py
 
-from hashed_loop.file_io import cache_gp_dict
+from hashed_loop.file_io import (
+    default_hdf5,
+    default_silent,
+    build_and_cache_gp_dicts,
+)
 
 
 # TODO Add link mode to this script so you don't ahve to copy resources every time
@@ -17,13 +20,9 @@ def main(store_path, silent_path, link_mode=False):
     Register the silent and data table, link_mode makes symlinks instead of copy
 
     """
-    dest_path_store = os.path.join(
-        os.path.dirname(__file__), "resources/hdf5_archives/default.hf5"
-    )
+    dest_path_store = default_hdf5()
+    dest_path_silent = default_silent()
 
-    dest_path_silent = os.path.join(
-        os.path.dirname(__file__), "resources/silent_files/default.silent"
-    )
     os.makedirs(os.path.dirname(dest_path_store), exist_ok=True)
     os.makedirs(os.path.dirname(dest_path_silent), exist_ok=True)
     if link_mode:
@@ -36,3 +35,5 @@ def main(store_path, silent_path, link_mode=False):
     else:
         copyfile(store_path, dest_path_store)
         copyfile(silent_path, dest_path_silent)
+
+    build_and_cache_gp_dicts(store_path)

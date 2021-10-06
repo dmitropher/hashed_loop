@@ -4,6 +4,7 @@ import h5py
 import pyrosetta
 import json
 import getpy as gp
+import numpy as np
 
 # TODO gp_dict caching in resources
 def safe_load_pdbs(pdbs):
@@ -136,3 +137,36 @@ def retrieve_gp_dict_from_cache(ori, cart, key_type, value_type):
     gp_dict = gp.Dict(key_type, value_type)
     gp_dict.load(dest_path_gp_cache_dir + "/" + name)
     return gp_dict
+
+
+def build_gp_dict(data_set, key_type, value_type):
+    """
+    Convert dataset with int64 keys and int32/int32 vals into int64/int64 gpdict
+    """
+    gp_dict = gp.Dict(key_type, value_type)
+
+    gp_keys = np.array(data_set[:, 0]).astype(np.int64)
+    gp_vals = np.array(data_set[:, 1:]).astype(np.int64)
+
+    gp_vals = gp_vals.astype(np.int32).reshape(-1)
+    gp_vals = gp_vals.view(np.int64)
+
+    gp_dict[gp_keys] = gp_vals
+    return gp_dict
+
+
+def build_and_cache_gp_dicts(store_path):
+    """
+    Reads in all data under 'key_value_data' in the store and caches gp_dicts
+    """
+    with h5py.File(store_path, "r") as hdf5:
+        kv_group = hdf5["key_value_data"]
+        for name in kv_group.keys():
+            ds = kv_group[name]
+            if not isinstance(ds, h5py.Dataset):
+                continue
+            else:
+                ori = ds.attrs["ori_resl"]
+                cart = ds.attrs["cart_resl"]
+                gp_dict = build_gp_dict(ds, np.int64, np.int64)
+                cache_gp_dict(gp_dict, ori, cart)

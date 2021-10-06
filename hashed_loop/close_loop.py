@@ -31,6 +31,7 @@ from hashed_loop.file_io import (
     get_sorted_ds_list,
     cache_gp_dict,
     retrieve_gp_dict_from_cache,
+    build_gp_dict,
 )
 
 
@@ -276,15 +277,7 @@ def main(
             xbin_ori, xbin_cart, key_type, value_type
         )
         if gp_dict is None:
-            gp_dict = gp.Dict(key_type, value_type)
-
-            gp_keys = np.array(kv_ds[:, 0]).astype(np.int64)
-            gp_vals = np.array(kv_ds[:, 1:]).astype(np.int64)
-
-            gp_vals = gp_vals.astype(np.int32).reshape(-1)
-            gp_vals = gp_vals.view(np.int64)
-
-            gp_dict[gp_keys] = gp_vals
+            gp_dict = build_gp_dict(kv_ds, key_type, value_type)
             cache_gp_dict(gp_dict, xbin_ori, xbin_cart)
 
         gp_vals, key_mask = get_closure_hits(xbin_keys, gp_dict)
