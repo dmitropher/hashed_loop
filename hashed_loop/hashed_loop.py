@@ -395,17 +395,17 @@ def sfd_tag_slice(silent_index, silent_out, silent_file, tag, start, end):
 
 def silent_preload(silent_file_path):
     """
-    Returns sfd, index
+    Returns index,out
     """
-    sfd = pyrosetta.rosetta.core.io.silent.SilentFileData(
-        pyrosetta.rosetta.core.io.silent.SilentFileOptions()
-    )
-    sfd.read_file(silent_file_path)
+    # sfd = pyrosetta.rosetta.core.io.silent.SilentFileData(
+    #     pyrosetta.rosetta.core.io.silent.SilentFileOptions()
+    # )
+    # sfd.read_file(silent_file_path)
 
     silent_index = silent_tools.get_silent_index(silent_file_path)
 
     silent_out = silent_tools.silent_header(silent_index)
-    return sfd, silent_index, silent_out
+    return silent_index, silent_out
 
 
 def align_loop(loop_pose, target_pose, start_site, end_site=None):

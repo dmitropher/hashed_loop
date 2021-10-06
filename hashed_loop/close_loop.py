@@ -42,41 +42,10 @@ def preload(rosetta_flags_file):
 
     run_pyrosetta_with_flags(rosetta_flags_file)
 
-    sfd, silent_index, silent_out = silent_preload(default_silent())
+    silent_index, silent_out = silent_preload(default_silent())
     hdf5_handle = h5py.File(default_hdf5(), "r")
 
-    return hdf5_handle, sfd, silent_index, silent_out
-
-
-def update_report(
-    master_df, closure_quality, attempted_poses, pose_mask, cart_resl, ori_resl
-):
-    """
-    Dump closure data
-    """
-    tags_closure = np.array(
-        [[p.pdb_info().name(), p.chain_end(1)] for p in attempted_poses]
-    )
-    tags = tags_closure[:, 0]
-    closure = tags_closure[:, 1].astype(int)
-    targ_plus_1 = closure + 1
-
-    df_dict = {}
-    df_dict["pose_name"] = tags
-    df_dict["break_start"] = closure
-    df_dict["break_end"] = targ_plus_1
-    df_dict["closure_found"] = pose_mask
-    df_dict["closure_bb_rmsd"] = closure_quality
-    df_dict["cart_resl"] = np.full_like(closure_quality, cart_resl)
-    df_dict["ori_resl"] = np.full_like(closure_quality, ori_resl)
-    df = pd.DataFrame(df_dict)
-    df.index.set_names(f"index_c{cart_resl}_o{ori_resl}")
-    if master_df.empty:
-        return df
-    else:
-        out = pd.concat([master_df, df])
-        return out
-    # df.to_csv("closure_data.csv")
+    return hdf5_handle, silent_index, silent_out
 
 
 def poses_from_paths(*paths, silent_mode=False):
@@ -181,7 +150,7 @@ def main(
 ):
     """
     """
-    hdf5, sfd, silent_index, silent_out = preload(rosetta_flags_file)
+    hdf5, silent_index, silent_out = preload(rosetta_flags_file)
     logger.debug("preload complete")
     sorted_ds_list = get_sorted_ds_list(hdf5)
     sorted_ds_list = sorted_ds_list[:max_tables]
