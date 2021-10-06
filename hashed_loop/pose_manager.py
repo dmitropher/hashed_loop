@@ -239,7 +239,7 @@ class PoseManager(object):
         rechain=False,
         allow_incomplete=False,
         score_manager=None,
-        max_check_depth_per_closure_list=150,
+        max_check_depth_per_closure_list=50,
     ):
         """
         Attempts to build loop closures for this pose, returns a closure report
@@ -289,8 +289,8 @@ class PoseManager(object):
                 passing_loops.append(
                     LoopContainer(loop_pose, closure, bb_rmsd)
                 )
-                if len(passing_loops) >= loop_count_per_closure:
-                    continue
+                # if len(passing_loops) >= loop_count_per_closure:
+                #     continue
                 # loop_main_dict[(c1, c2)] = passing_loops
 
             passing_loops.sort(key=lambda lc: lc.rmsd)
