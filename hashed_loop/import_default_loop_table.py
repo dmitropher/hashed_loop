@@ -15,7 +15,8 @@ from hashed_loop.file_io import (
 @click.argument("store_path")
 @click.argument("silent_path")
 @click.option("-l", "link_mode", is_flag=True, default=False)
-def main(store_path, silent_path, link_mode=False):
+@click.option("-s", "skip_precaching", is_flag=True, default=False)
+def main(store_path, silent_path, link_mode=False, skip_precaching=False):
     """
     Register the silent and data table, link_mode makes symlinks instead of copy
 
@@ -35,5 +36,5 @@ def main(store_path, silent_path, link_mode=False):
     else:
         copyfile(store_path, dest_path_store)
         copyfile(silent_path, dest_path_silent)
-
-    build_and_cache_gp_dicts(store_path)
+    if not skip_precaching:
+        build_and_cache_gp_dicts(store_path)
