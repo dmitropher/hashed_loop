@@ -2,7 +2,7 @@ import logging
 
 logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.ERROR)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARNING)
 
 from itertools import product
 from collections import namedtuple
