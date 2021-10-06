@@ -3,7 +3,7 @@ import logging
 
 logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.ERROR)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARNING)
 
 import click
 
@@ -115,20 +115,12 @@ def retrieve_string_archive(hdf5, xbin_cart, xbin_ori):
     show_default=True,
     help="Rosetta flags file to run pyrosetta with. If unsure, try leaving this blank",
 )
-# TODO split everything mode into "output low-res also" and "give up after target rmsd reached"
-# @click.option(
-#     "-e",
-#     "--everything-mode",
-#     "one_with_everything",
-#     is_flag=True,
-#     help="Keep outputting until max outputs reached even if a high res solution is found.",
-# )
 @click.option(
     "-c",
     "--loop-count-per-closure",
     "loop_count_per_closure",
     nargs=1,
-    default=50,
+    default=1,
     type=int,
     show_default=True,
     help="Set specific closure count per break. Use 0 to set no maximum. You cannot request exactly 0 closures.",
@@ -148,7 +140,7 @@ def retrieve_string_archive(hdf5, xbin_cart, xbin_ori):
     "--rmsd-threshold",
     "rmsd_threshold",
     nargs=1,
-    default=0.25,
+    default=0.35,
     type=float,
     show_default=True,
     help="Default minimum rmsd is 0.25, if you want to allow lower res, or restrict to higher res, specify a value.",
@@ -164,7 +156,7 @@ def retrieve_string_archive(hdf5, xbin_cart, xbin_ori):
     "-m",
     "--max_table-depth",
     "max_tables",
-    default=25,
+    default=10,
     show_default=True,
     help="Limit the number of hashmaps to traverse. Useful only if you know how the hdf5 is structured and you want to do something special. Messing with this can drastically lengthen or worsen your run.",
 )
@@ -179,12 +171,12 @@ def retrieve_string_archive(hdf5, xbin_cart, xbin_ori):
 def main(
     input_structure_paths,
     rosetta_flags_file="",
-    loop_count_per_closure=50,
+    loop_count_per_closure=1,
     insertion_length_per_closure=[1, 20],
-    rmsd_threshold=0.25,
+    rmsd_threshold=0.35,
     silent_mode=False,
     one_with_everything=False,
-    max_tables=25,
+    max_tables=10,
     allowed_trim_depth=0,
 ):
     """
