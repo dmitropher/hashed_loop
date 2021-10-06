@@ -44,8 +44,9 @@ class StructureManager(object):
         self._loop_dict = {}
 
     def get_loop(self, archive_string):
-        loop = self._loop_dict.get(archive_string)
-        if loop is None:
+        if archive_string in self._loop_dict.keys():
+            loop = self._loop_dict.get(archive_string)
+        else:
             tag, start, end = archive_string.split(":")
             start = int(start)
             end = int(end)
