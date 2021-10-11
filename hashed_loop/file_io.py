@@ -168,5 +168,5 @@ def build_and_cache_gp_dicts(store_path):
             else:
                 ori = ds.attrs["ori_resl"]
                 cart = ds.attrs["cart_resl"]
-                gp_dict = build_gp_dict(ds, np.int64, np.int64)
+                gp_dict = build_gp_dict(ds, np.dtype(np.int64), np.dtype(np.int64))
                 cache_gp_dict(gp_dict, ori, cart)
