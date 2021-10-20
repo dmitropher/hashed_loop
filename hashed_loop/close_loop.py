@@ -316,15 +316,18 @@ def main(
                 )
     scoreman = ScoreManager()
     for pm in pose_mans:
-        pm.build_and_dump_closures(
+
+        for outpose in pm.build_closures(
             loop_count_per_closure=loop_count_per_closure,
             insertion_length_per_closure=insertion_length_per_closure,
             rmsd_threshold=rmsd_threshold,
-            out_path=".",
             rechain=False,
             allow_incomplete=False,
             score_manager=scoreman,
-        )
+            max_check_depth_per_closure_list = max(50,loop_count_per_closure),
+        ):
+            outpose.dump_pdb("." + "/" + outpose.pdb_info().name() + ".pdb")
+
         scoreman.to_csv("closure_data.csv")
 
     # df.to_csv("closure_data.csv")

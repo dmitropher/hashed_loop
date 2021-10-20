@@ -9,6 +9,8 @@ from collections import namedtuple
 
 import numpy as np
 
+import pyrosetta
+
 # import npose_util as nu
 import npose_util_pyrosetta as nup
 
@@ -231,12 +233,11 @@ class PoseManager(object):
             # )
             return data_container.closure_data_list
 
-    def build_and_dump_closures(
+    def build_closures(
         self,
         loop_count_per_closure=50,
         insertion_length_per_closure=[1, 20],
         rmsd_threshold=0.25,
-        out_path=".",
         rechain=False,
         allow_incomplete=False,
         score_manager=None,
@@ -335,5 +336,9 @@ class PoseManager(object):
             reloop_name = f"""{
                 self.pose.pdb_info().name().split(".pdb")[0]
                 }_{output_n}.pdb"""
-            out_file = f"{out_path}/{reloop_name}"
-            linked.dump_pdb(out_file)
+            pinf = pyrosetta.rosetta.core.pose.PDBInfo(linked)
+            pinf.name(reloop_name)
+            linked.pdb_info(pinf)
+            yield linked
+            # out_file = f"{out_path}/{reloop_name}"
+            # linked.dump_pdb(out_file)
