@@ -15,6 +15,11 @@ You must have pyrosetta inside of the environment you install this package in. I
 <code> import_default_loop_table /path/to/loop.hf5 /path/to/loop.silent </code><br/>
 (Tables are typically large, the copy operation can take a long time. The table is copied to the package resource directory rather than referenced.)
 
+prebuilt data is available at:
+https://files.ipd.uw.edu/dzorine/full.hf5
+https://files.ipd.uw.edu/dzorine/default.silent
+
+
 ### Otherwise:
 <br/>
 <code> python -m pip install git+https://github.com/dmitropher/hashed_loop.git </code>
