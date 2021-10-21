@@ -92,7 +92,7 @@ def retrieve_string_archive(hdf5, xbin_cart, xbin_ori):
     default=1,
     type=int,
     show_default=True,
-    help="Set specific closure count per break. Use 0 to set no maximum. You cannot request exactly 0 closures.",
+    help="Set specific closure count per break. If you are closing multiple chains, this will scale runtime exponentially. (4 chain breaks closed twice is 2**4 combinations)",
 )
 @click.option(
     "-l",
@@ -112,14 +112,14 @@ def retrieve_string_archive(hdf5, xbin_cart, xbin_ori):
     default=0.35,
     type=float,
     show_default=True,
-    help="Default minimum rmsd is 0.25, if you want to allow lower res, or restrict to higher res, specify a value.",
+    help="Default minimum rmsd is 0.35, if you want to allow lower res, or restrict to higher res, specify a value.",
 )
 @click.option(
     "-s",
     "--silent-mode",
     "silent_mode",
     is_flag=True,
-    help="This flag allows you to pass silent file(s) and get silent files back. Ignore if you would rather work with pdbs",
+    help="This flag allows you to pass silent file(s) as input.",
 )
 @click.option(
     "-m",
@@ -127,7 +127,7 @@ def retrieve_string_archive(hdf5, xbin_cart, xbin_ori):
     "max_tables",
     default=10,
     show_default=True,
-    help="Limit the number of hashmaps to traverse. Useful only if you know how the hdf5 is structured and you want to do something special. Messing with this can drastically lengthen or worsen your run.",
+    help="Limit the number of hashmaps to traverse. Useful only if you know how the hdf5 is structured and you want to do something special. Messing with this can drastically lengthen runtime or worsen your run quality.",
 )
 @click.option(
     "-i",
