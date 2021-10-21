@@ -1,11 +1,9 @@
 #! /usr/bin/env python3
 import logging
-import math
-import os
 
 logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.ERROR)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARNING)
 
 import click
 
@@ -13,30 +11,28 @@ import click
 import numpy as np
 from xbin import XformBinner as xb
 import pandas as pd
+import getpy as gp
 import h5py
 
 from hashed_loop import (
-    align_loop,
     run_pyrosetta_with_flags,
-    np_rt_from_residues,
     poses_from_silent,
-    link_poses,
-    sfd_tag_slice,
-    get_chains,
     silent_preload,
-    atom_coords,
-    superposition_pose,
-    subset_bb_rmsd,
     get_closure_hits,
 )
+from hashed_loop.pose_manager import PoseManager as poseman
+from hashed_loop.pose_manager import StructureManager
+from hashed_loop.scoring import ScoreManager
+
 from hashed_loop.file_io import (
     default_hdf5,
     default_silent,
     safe_load_pdbs,
     get_sorted_ds_list,
+    cache_gp_dict,
+    retrieve_gp_dict_from_cache,
+    build_gp_dict,
 )
-
-from pyrosetta.rosetta.utility import vector1_bool as vector1_bool
 
 
 def preload(rosetta_flags_file):
@@ -46,41 +42,10 @@ def preload(rosetta_flags_file):
 
     run_pyrosetta_with_flags(rosetta_flags_file)
 
-    sfd, silent_index, silent_out = silent_preload(default_silent())
+    silent_index, silent_out = silent_preload(default_silent())
     hdf5_handle = h5py.File(default_hdf5(), "r")
 
-    return hdf5_handle, sfd, silent_index, silent_out
-
-
-def update_report(
-    master_df, closure_quality, attempted_poses, pose_mask, cart_resl, ori_resl
-):
-    """
-    Dump closure data
-    """
-    tags_closure = np.array(
-        [[p.pdb_info().name(), p.chain_end(1)] for p in attempted_poses]
-    )
-    tags = tags_closure[:, 0]
-    closure = tags_closure[:, 1].astype(int)
-    targ_plus_1 = closure + 1
-
-    df_dict = {}
-    df_dict["pose_name"] = tags
-    df_dict["break_start"] = closure
-    df_dict["break_end"] = targ_plus_1
-    df_dict["closure_found"] = pose_mask
-    df_dict["closure_bb_rmsd"] = closure_quality
-    df_dict["cart_resl"] = np.full_like(closure_quality, cart_resl)
-    df_dict["ori_resl"] = np.full_like(closure_quality, ori_resl)
-    df = pd.DataFrame(df_dict)
-    df.index.set_names(f"index_c{cart_resl}_o{ori_resl}")
-    if master_df.empty:
-        return df
-    else:
-        out = pd.concat([master_df, df])
-        return out
-    # df.to_csv("closure_data.csv")
+    return hdf5_handle, silent_index, silent_out
 
 
 def poses_from_paths(*paths, silent_mode=False):
@@ -119,23 +84,15 @@ def retrieve_string_archive(hdf5, xbin_cart, xbin_ori):
     show_default=True,
     help="Rosetta flags file to run pyrosetta with. If unsure, try leaving this blank",
 )
-# TODO split everything mode into "output low-res also" and "give up after target rmsd reached"
-# @click.option(
-#     "-e",
-#     "--everything-mode",
-#     "one_with_everything",
-#     is_flag=True,
-#     help="Keep outputting until max outputs reached even if a high res solution is found.",
-# )
 @click.option(
     "-c",
     "--loop-count-per-closure",
     "loop_count_per_closure",
     nargs=1,
-    default=50,
+    default=1,
     type=int,
     show_default=True,
-    help="Set specific closure count per break. Use 0 to set no maximum. You cannot request exactly 0 closures.",
+    help="Set specific closure count per break. If you are closing multiple chains, this will scale runtime exponentially. (4 chain breaks closed twice is 2**4 combinations)",
 )
 @click.option(
     "-l",
@@ -152,39 +109,48 @@ def retrieve_string_archive(hdf5, xbin_cart, xbin_ori):
     "--rmsd-threshold",
     "rmsd_threshold",
     nargs=1,
-    default=0.25,
+    default=0.35,
     type=float,
     show_default=True,
-    help="Default minimum rmsd is 0.25, if you want to allow lower res, or restrict to higher res, specify a value.",
+    help="Default minimum rmsd is 0.35, if you want to allow lower res, or restrict to higher res, specify a value.",
 )
 @click.option(
     "-s",
     "--silent-mode",
     "silent_mode",
     is_flag=True,
-    help="This flag allows you to pass silent file(s) and get silent files back. Ignore if you would rather work with pdbs",
+    help="This flag allows you to pass silent file(s) as input.",
 )
 @click.option(
     "-m",
     "--max_table-depth",
     "max_tables",
-    default=25,
+    default=10,
     show_default=True,
-    help="Limit the number of hashmaps to traverse. Useful only if you know how the hdf5 is structured and you want to do something special. Messing with this can drastically lengthen or worsen your run.",
+    help="Limit the number of hashmaps to traverse. Useful only if you know how the hdf5 is structured and you want to do something special. Messing with this can drastically lengthen runtime or worsen your run quality.",
+)
+@click.option(
+    "-i",
+    "--allowed-trim-depth",
+    "allowed_trim_depth",
+    default=0,
+    show_default=True,
+    help="Allowed depth to check at each chain_break. This essentially 'trims back' the structure to get more sampling endpoints",
 )
 def main(
     input_structure_paths,
     rosetta_flags_file="",
-    loop_count_per_closure=50,
+    loop_count_per_closure=1,
     insertion_length_per_closure=[1, 20],
-    rmsd_threshold=0.25,
+    rmsd_threshold=0.35,
     silent_mode=False,
     one_with_everything=False,
-    max_tables=25,
+    max_tables=10,
+    allowed_trim_depth=0,
 ):
     """
     """
-    hdf5, sfd, silent_index, silent_out = preload(rosetta_flags_file)
+    hdf5, silent_index, silent_out = preload(rosetta_flags_file)
     logger.debug("preload complete")
     sorted_ds_list = get_sorted_ds_list(hdf5)
     sorted_ds_list = sorted_ds_list[:max_tables]
@@ -193,167 +159,178 @@ def main(
     # ]
     # logger.debug(f"sorted_ds_print_list: {sorted_ds_print_list}")
 
-    all_xforms = []
-    target_poses = []
+    all_xforms = np.empty((0, 4, 4))
+    chains_from_to = np.empty((0, 2))
+    res_indices = np.empty((0, 2))
+    poses_mask = np.empty(0)
+    # rosetta_xforms = np.empty((0, 4, 4))
+    # don't be fooled, the man is for manager, not some sort of dated superhero-like alias
+    pose_mans = []
 
-    for target_pose in poses_from_paths(
-        *input_structure_paths, silent_mode=silent_mode
+    struct_manager = StructureManager(
+        default_silent(), silent_out, silent_index
+    )
+    for struct_num, target_pose in enumerate(
+        poses_from_paths(*input_structure_paths, silent_mode=silent_mode)
     ):
         logger.debug("pose obtained")
-
-        chain_1, chain_2 = get_chains(target_pose, 1, 2)
-        chain_a_end_index = chain_1.size()
-        xform_to_close = np_rt_from_residues(
-            chain_1.residues[chain_a_end_index], chain_2.residues[1]
-        )
-        all_xforms.append(xform_to_close)
-        target_poses.append(target_pose)
-
-    min_size = min(insertion_length_per_closure)
-    max_size = max(insertion_length_per_closure)
-
-    closures_attempted = len(target_poses)
-    loops = np.zeros(closures_attempted)
-
-    closure_quality = np.full(closures_attempted, 1000.0)
-    closures_on_disk = [set() for i in range(closures_attempted)]
-
-    df = pd.DataFrame()
-
-    for kv_ds in sorted_ds_list:
-        unclosed_mask = loops < loop_count_per_closure
-        unclosed = loops[unclosed_mask]
-        logger.debug(f"unclosed: {unclosed}")
-        if unclosed.shape[0] == 0:
-            logger.debug(
-                f"Desired number of outputs found, not scanning bigger tables"
+        pose_mans.append(
+            poseman(
+                pose=target_pose,
+                allowed_trim_depth=allowed_trim_depth,
+                structure_manager=struct_manager,
             )
-            break
+        )
+        pm = pose_mans[struct_num]
+
+        n_chains = pm.pose.num_chains()
+        this_pm_xforms, this_pm_chains_from_to, this_pm_res_indices = pm.get_all_closure_xforms(
+            *list((i, i + 1) for i in range(1, n_chains))
+        )
+        n_xforms = this_pm_xforms.shape[0]
+        all_xforms = np.concatenate((all_xforms, this_pm_xforms), axis=0)
+        chains_from_to = np.concatenate(
+            (chains_from_to, this_pm_chains_from_to), axis=0
+        )
+        res_indices = np.concatenate(
+            (res_indices, this_pm_res_indices), axis=0
+        )
+        this_poses_mask = np.full(n_xforms, struct_num)
+        poses_mask = np.concatenate((poses_mask, this_poses_mask))
+        # this_pose_rosetta_xforms = np.array(
+        #     [
+        #         np_rt_from_residues(
+        #             target_pose.residue(r1), target_pose.residue(r2)
+        #         )
+        #         for (r1, r2) in this_pm_res_indices
+        #     ]
+        # )
+        # rosetta_xforms = np.concatenate(
+        #     (rosetta_xforms, this_pose_rosetta_xforms), axis=0
+        # )
+
+    num_poses = len(pose_mans)
+
+    # loops = np.zeros(num_poses)
+    for kv_ds in sorted_ds_list:
+        # unclosed_mask = loops < loop_count_per_closure
+        # unclosed = loops[unclosed_mask]
+        # logger.debug(f"unclosed: {unclosed}")
+        # if unclosed.shape[0] == 0:
+        #     logger.debug(
+        #         f"Desired number of outputs found, not scanning bigger tables"
+        #     )
+        #     break
         logger.debug("building hashmap from archive")
-        logger.debug(f"kv_ds.dtype: {kv_ds.dtype}")
 
         xbin_cart = kv_ds.attrs["cart_resl"]
         xbin_ori = kv_ds.attrs["ori_resl"]
         binner = xb(ori_resl=xbin_ori, cart_resl=xbin_cart)
         xbin_keys = binner.get_bin_index(np.array(all_xforms))
+        # r_xbin_keys = binner.get_bin_index(np.array(rosetta_xforms))
 
-        gp_vals, key_mask = get_closure_hits(xbin_keys, kv_ds)
+        # logger.debug(f"xbin_keys: {xbin_keys}")
+        # logger.debug(f"r_xbin_keys: {r_xbin_keys}")
 
-        pose_indices = np.nonzero(key_mask.flatten() == True)[0]
-        logger.debug(f"pose_indices: {pose_indices}")
+        key_type = np.dtype("i8")
+        value_type = np.dtype("i8")
+        gp_dict = retrieve_gp_dict_from_cache(
+            xbin_ori, xbin_cart, key_type, value_type
+        )
+        if gp_dict is None:
+            gp_dict = build_gp_dict(kv_ds, key_type, value_type)
+            cache_gp_dict(gp_dict, xbin_ori, xbin_cart)
+
+        gp_vals, key_mask = get_closure_hits(xbin_keys, gp_dict)
+        logger.debug(f"gp_vals: {gp_vals}")
+        logger.debug(f"key_mask: {key_mask}")
+        flat_key_mask = key_mask.flatten()  # not sure why this isn't flat?
+
+        # this is legacy from when there was one check per pose:
+        # It's best to use one array for everything to exploit the parallelism of the hashmap
+        # and numpy array math speedup, but then we have to figure out which pose everything came from
+        main_array_hit_indices = np.nonzero(flat_key_mask == True)[0]
+        logger.debug(f"main_array_hit_indices: {main_array_hit_indices}")
 
         string_ds = retrieve_string_archive(hdf5, xbin_cart, xbin_ori)
-        for gp_val, target_pose_i in zip(gp_vals, pose_indices):
-            # logger.debug(gp_val)
-            target_pose = target_poses[target_pose_i]
-            chain_1, chain_2 = get_chains(target_pose, 1, 2)
-            chain_a_end_index = chain_1.size()
 
-            tag_entries = string_ds[gp_val[0] : gp_val[0] + gp_val[1]]
+        for pose_number in range(num_poses):
+            logger.debug(f"pose number: {pose_number}")
+            # cut all arrays down to just pose of interest
+            pose_num_mask = (poses_mask == pose_number).astype(np.bool)
 
-            # logger.debug(f"tag_entries: {tag_entries}")
-            for loop_string_bytes in tag_entries:
+            this_pose_hits_mask = (flat_key_mask[pose_num_mask]).astype(
+                np.bool
+            )
+            n_hits = this_pose_hits_mask.sum()
+            logger.debug(f"pose_num_mask: {pose_num_mask}")
+            logger.debug(f"this_pose_hits_mask: {this_pose_hits_mask}")
+            logger.debug(f"n_hits: {n_hits}")
 
-                if loop_count_per_closure:
-                    if loops[target_pose_i] >= loop_count_per_closure:
-                        logger.debug(
-                            f"loops_closed: {loops[target_pose_i] }, skipping this target:{target_pose_i}"
-                        )
-                        break
-                loop_string = loop_string_bytes.decode("UTF-8")
-                reloop_name = f"""{
-                    target_pose.pdb_info().name().split(".pdb")[0]
-                    }_l{
-                    chain_a_end_index
-                    }_{loop_string}.pdb"""
-                if os.path.exists(reloop_name):
-                    logger.debug(f"this closure is done already: skipping")
-                    if reloop_name in closures_on_disk[target_pose_i]:
-                        if loops[target_pose_i] == 0:
-                            loops[target_pose_i] += 1
-                    else:
-                        closures_on_disk[target_pose_i].add(reloop_name)
-                    continue
-                # logger.debug(f"loop_string: {loop_string}")
-                # working_target = chain_1.clone()
-                # extract info from the archive
-                tag, start, end = loop_string.split(":")
-                start = int(start)
-                end = int(end)
+            if n_hits == 0:
+                continue
 
-                # size of loop -2 ends which get chopped after alignment
-                insertion_size = end - start - 1
-                if not (min_size <= insertion_size <= max_size):
-                    logger.debug(
-                        f"insertion size ({insertion_size}) out of range: {insertion_length_per_closure}"
-                    )
-                    continue
-                # get the loop from the silent, align, trim off ends
-                # loop_pose = pose_from_sfd_tag(sfd, tag)
-                # HACK careful, default_silent() is hardcoded here
-                # TODO implement user ability to specify own tables for everything
-                try:
-                    loop_pose = sfd_tag_slice(
-                        silent_index,
-                        silent_out,
-                        default_silent(),
-                        tag,
-                        start,
-                        end + 1,
-                    )
-                except AssertionError as e:
-                    logger.error(e)
-                    logger.error("something went wrong in loop loading")
-                    logger.error("passing")
-                    continue
+            poses_before_mask = (poses_mask < pose_number).astype(np.bool)
+            hits_before_mask = (flat_key_mask[poses_before_mask]).astype(
+                np.bool
+            )
+            n_hits_before = hits_before_mask.sum()
 
-                aligned_loop = align_loop(
-                    loop_pose, target_pose, chain_a_end_index
+            this_pose_gp_vals = gp_vals[n_hits_before : n_hits_before + n_hits]
+
+            this_pose_chains_from_to = chains_from_to[pose_num_mask]
+            this_pose_res_indices = res_indices[pose_num_mask]
+
+            this_pm = pose_mans[pose_number]
+
+            masked_chains_from_to = this_pose_chains_from_to[
+                this_pose_hits_mask
+            ]
+            masked_this_pose_res_indices = this_pose_res_indices[
+                this_pose_hits_mask
+            ]
+            # disgusting zip to iterate with objects instead of indexes
+            for (
+                (str_ds_start, str_ds_offset),
+                (c1, c2),
+                (res_i_1, res_i_2),
+            ) in zip(
+                this_pose_gp_vals,
+                masked_chains_from_to,
+                masked_this_pose_res_indices,
+            ):
+                tag_entries = string_ds[
+                    str_ds_start : str_ds_start + str_ds_offset
+                ]
+                loop_strings = [
+                    loop_bytes.decode("UTF-8") for loop_bytes in tag_entries
+                ]
+                this_pm.record_closures(
+                    int(c1),
+                    int(c2),
+                    int(res_i_1),
+                    int(res_i_2),
+                    loop_strings,
+                    cart_resl=xbin_cart,
+                    ori_resl=xbin_ori,
                 )
-                loop_pose_size = aligned_loop.size()
-                # insertion_size = loop_pose_size - 2
+    scoreman = ScoreManager()
+    for pm in pose_mans:
 
-                target_subset = vector1_bool(target_pose.size())
-                aligned_loop_subset = vector1_bool(loop_pose_size)
+        for outpose in pm.build_closures(
+            loop_count_per_closure=loop_count_per_closure,
+            insertion_length_per_closure=insertion_length_per_closure,
+            rmsd_threshold=rmsd_threshold,
+            rechain=False,
+            allow_incomplete=False,
+            score_manager=scoreman,
+            max_check_depth_per_closure_list = max(50,loop_count_per_closure),
+        ):
+            outpose.dump_pdb("." + "/" + outpose.pdb_info().name() + ".pdb")
 
-                target_subset[chain_a_end_index] = True
-                target_subset[chain_a_end_index + 1] = True
-                aligned_loop_subset[1] = True
-                aligned_loop_subset[loop_pose_size] = True
+        scoreman.to_csv("closure_data.csv")
 
-                bb_rmsd = subset_bb_rmsd(
-                    target_pose,
-                    aligned_loop,
-                    target_subset,
-                    aligned_loop_subset,
-                    superimpose=False,
-                )
-                if bb_rmsd < closure_quality[target_pose_i]:
-                    # logger.debug(f"better closure found: replacing")
-                    # logger.debug(
-                    #     f"closure_quality[{target_pose_i}]:{closure_quality[target_pose_i]} with {bb_rmsd}"
-                    # )
-                    closure_quality[target_pose_i] = bb_rmsd
-                if bb_rmsd > rmsd_threshold:
-                    # logger.debug(
-                    #     f"bb_rmsd exceeds threshold {bb_rmsd} > {rmsd_threshold}"
-                    # )
-                    # logger.debug(f"Not building pose")
-                    continue
-
-                aligned_loop.delete_residue_range_slow(
-                    loop_pose_size, loop_pose_size
-                )
-                aligned_loop.delete_residue_range_slow(1, 1)
-                looped = link_poses(
-                    chain_1, aligned_loop, chain_2, rechain=True
-                )
-                looped.dump_pdb(reloop_name)
-                loops[target_pose_i] += 1
-        df = update_report(
-            df, closure_quality, target_poses, key_mask, xbin_cart, xbin_ori
-        )
-    df.to_csv("closure_data.csv")
+    # df.to_csv("closure_data.csv")
     hdf5.close()
 
 
