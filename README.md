@@ -27,7 +27,7 @@ If you have access to IPD computational resources, contact me directly and I can
 
 The loop closer should be usable by running:
 <br/><code>close_loop /path/to/my.pdb</code><br/>
-Run the following for options and help
+It is **hightly reccommended** that you run the following for options and help
 <br/><code>close_loop --help</code><br/>
 
 ## Bulding your own table (not recommended)
