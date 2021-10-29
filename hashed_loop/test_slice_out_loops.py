@@ -236,7 +236,7 @@ def main(loop_struct_silent, rosetta_flags_file=""):
             loop_start = begin + 1
             loop_end = end - 1
             print(f"loop_start: {loop_start}, loop_end: {loop_end}")
-            if loop_start <= 1:
+            if loop_start <= 3:
                 print(f"loop starts at: {loop_start}, this is too small")
                 continue
             if loop_end >= pose_copy.size():
