@@ -63,7 +63,7 @@ class StructureManager(object):
         self._loop_dict[archive_string] = loop
         return loop.clone()
 
-
+#TODO parse the pose before making npose: separate coords which are not protein chains
 class PoseManager(object):
     """
     Manages the structure to close
